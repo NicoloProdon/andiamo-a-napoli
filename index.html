@@ -858,12 +858,12 @@
 <script>
 // ─── SCREEN MANAGEMENT ───────────────────────────────────────────────────────
 const screens = [
-  'intro','profiles',
+  'loader','intro','profiles',
   'nadeska-unlock','franceska-unlock',
   'nadeska-welcome','franceska-welcome',
   'success'
 ];
-let currentScreen = 'intro';
+let currentScreen = 'loader';
 
 function goTo(name) {
   const prev = document.getElementById('screen-' + currentScreen);
