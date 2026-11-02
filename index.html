@@ -18,18 +18,18 @@
 
   /* ─── LOADER ─── */
   #screen-loader {
-    background:#e50914; z-index:100; flex-direction:column; gap:32px;
+    background:#3a0000; z-index:100; flex-direction:column; gap:16px;
   }
-  .loader-logo {
-    font-size:clamp(60px,15vw,120px); font-weight:900; color:#fff;
-    font-family:'Georgia',serif; letter-spacing:-2px;
+  .loader-pct {
+    font-size:clamp(14px,3.5vw,18px); font-weight:bold; color:rgba(255,255,255,0.7);
+    letter-spacing:2px; font-family:'Georgia',serif;
   }
   .loader-bar-wrap {
     width:clamp(140px,40vw,280px); height:4px;
-    background:rgba(255,255,255,0.3); border-radius:2px; overflow:hidden;
+    background:rgba(255,255,255,0.2); border-radius:2px; overflow:hidden;
   }
   .loader-bar-fill {
-    height:100%; background:#fff; border-radius:2px; width:0%;
+    height:100%; background:#e50914; border-radius:2px; width:0%;
     animation:loaderFill 3s cubic-bezier(0.4,0,0.8,1) forwards;
   }
   @keyframes loaderFill { to { width:100%; } }
@@ -693,7 +693,7 @@
 
 <!-- ══════════════════════ LOADER ══════════════════════ -->
 <div id="screen-loader" class="screen active">
-  <div class="loader-logo">aaN</div>
+  <div class="loader-pct" id="loader-pct">0%</div>
   <div class="loader-bar-wrap"><div class="loader-bar-fill"></div></div>
 </div>
 
@@ -966,10 +966,17 @@ window.addEventListener('load', () => {
   ['images/nadeska.jpeg','images/franceska.jpeg','images/vannacci.png']
     .forEach(src => { const img = new Image(); img.src = src; });
 
+  // Fake percentage counter
+  let pct = 0;
+  const pctEl = document.getElementById('loader-pct');
+  const pctInterval = setInterval(() => {
+    pct += Math.max(1, Math.floor((100 - pct) * 0.07));
+    if (pct >= 100) { pct = 100; clearInterval(pctInterval); }
+    pctEl.textContent = pct + '%';
+  }, 50);
+
   // Show intro after 3s loader
-  setTimeout(() => {
-    goTo('intro');
-  }, 3000);
+  setTimeout(() => { goTo('intro'); }, 3000);
 
   let introStarted = false;
 
