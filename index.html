@@ -1110,8 +1110,10 @@ function triggerVannacci(customMsg, onDismiss) {
 
   let x  = Math.random() * (window.innerWidth  - 160);
   let y  = Math.random() * (window.innerHeight - 200);
-  let vx = (Math.random() > 0.5 ? 1 : -1) * (2.5 + Math.random() * 2);
-  let vy = (Math.random() > 0.5 ? 1 : -1) * (2.5 + Math.random() * 2);
+  const isMobile = window.innerWidth < 768;
+  const speed = isMobile ? (1 + Math.random() * 1) : (2.5 + Math.random() * 2);
+  let vx = (Math.random() > 0.5 ? 1 : -1) * speed;
+  let vy = (Math.random() > 0.5 ? 1 : -1) * speed;
 
   img.style.left = x + 'px';
   img.style.top  = y + 'px';
