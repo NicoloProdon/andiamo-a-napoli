@@ -116,6 +116,34 @@
     box-shadow:0 3px 8px rgba(0,0,0,0.5);
   }
 
+  /* Slot reels */
+  .slot-reels-row {
+    display:flex; gap:clamp(5px,1.5vw,9px);
+    background:#0a0a0a; padding:clamp(8px,2vw,12px);
+    border-radius:8px; border:2px solid #555;
+    box-shadow:inset 0 3px 12px rgba(0,0,0,0.9);
+  }
+  .slot-reel-window {
+    width:clamp(46px,12vw,70px); height:clamp(46px,12vw,70px);
+    background:#f5f0e0; border-radius:5px;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid #aaa;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,0.25);
+    overflow:hidden;
+  }
+  .slot-reel-window.winning {
+    background:#fffbe6; border-color:#ffd700;
+    box-shadow:0 0 18px rgba(255,215,0,0.9), inset 0 2px 4px rgba(0,0,0,0.1);
+    animation:reelWin 0.18s ease-in-out 5;
+  }
+  @keyframes reelWin { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+  .slot-symbol {
+    font-size:clamp(22px,6.5vw,42px); font-weight:900;
+    font-family:'Courier New',monospace; color:#222;
+    line-height:1; user-select:none;
+  }
+  .slot-symbol.seven { color:#e50914; }
+
   /* Post-tap: netflix logo */
   .intro-logo {
     position:absolute;
@@ -718,6 +746,11 @@
     <div class="coin-insert-text">INSERT COIN</div>
     <div class="slot-cabinet" id="lever-wrap">
       <div class="coin-slot-opening"></div>
+      <div class="slot-reels-row">
+        <div class="slot-reel-window"><span class="slot-symbol" id="sym-0">♥</span></div>
+        <div class="slot-reel-window"><span class="slot-symbol" id="sym-1">★</span></div>
+        <div class="slot-reel-window"><span class="slot-symbol" id="sym-2">♦</span></div>
+      </div>
       <div class="lever-wrap">
         <div class="lever-inner" id="lever-inner">
           <div class="lever-ball"></div>
@@ -1030,12 +1063,31 @@ window.addEventListener('load', () => {
     setTimeout(() => goTo('profiles'), 4200);
   }
 
+  function spinReels(onDone) {
+    const syms = ['7','BAR','★','♥','♦','♣','@'];
+    const stopAt = [1300, 2100, 2900];
+    stopAt.forEach((ms, i) => {
+      const el = document.getElementById('sym-' + i);
+      const iv = setInterval(() => {
+        el.textContent = syms[Math.floor(Math.random() * syms.length)];
+        el.classList.remove('seven');
+      }, 70);
+      setTimeout(() => {
+        clearInterval(iv);
+        el.textContent = '7';
+        el.classList.add('seven');
+        el.closest('.slot-reel-window').classList.add('winning');
+        if (i === 2) setTimeout(onDone, 900);
+      }, ms);
+    });
+  }
+
   function onLeverClick() {
     const inner = document.getElementById('lever-inner');
     if (inner.classList.contains('pulled')) return;
     playCoinSound();
     inner.classList.add('pulled');
-    setTimeout(startIntro, 500);
+    spinReels(() => startIntro());
   }
 
   const leverWrap = document.getElementById('lever-wrap');
