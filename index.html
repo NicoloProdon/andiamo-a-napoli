@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Andiamo a Napoli</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#000; font-family:'Georgia', serif; font-size:18px; }
+
+  /* ─── SCREENS ─── */
+  .screen {
+    position:fixed; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.6s ease;
+  }
+  .screen.active { opacity:1; pointer-events:all; }
+
+  /* ─── INTRO ─── */
+  #screen-intro { background:#000; cursor:pointer; }
+
+  /* Pre-tap overlay */
+  #intro-tap-overlay {
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap: clamp(12px,3vh,20px);
+    transition: opacity 0.4s ease;
+  }
+  #intro-tap-overlay.hidden { opacity:0; pointer-events:none; }
+  .tap-finger {
+    font-size: clamp(80px,22vw,140px);
+    line-height:1;
+    animation: fingerBounce 1s ease-in-out infinite;
+    transform-origin: bottom center;
+    filter: drop-shadow(0 8px 30px rgba(255,255,255,0.15));
+  }
+  @keyframes fingerBounce {
+    0%,100% { transform: translateY(0) rotate(-10deg); }
+    50%     { transform: translateY(-18px) rotate(5deg); }
+  }
+  .tap-here-text {
+    font-size: clamp(36px,11vw,72px);
+    font-weight:900;
+    color:#fff;
+    letter-spacing: clamp(6px,2vw,14px);
+    text-transform:uppercase;
+    font-family:'Georgia', serif;
+    animation: tapPulse 1s ease-in-out infinite;
+  }
+  @keyframes tapPulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%     { opacity:0.7; transform:scale(0.96); }
+  }
+  .tap-tagline {
+    font-size: clamp(15px,4vw,22px);
+    color:#666;
+    letter-spacing: clamp(3px,1.5vw,7px);
+    text-transform:uppercase;
+    text-align:center;
+    padding:0 20px;
+  }
+
+  /* Post-tap: netflix logo */
+  .intro-logo {
+    position:absolute;
+    font-size: clamp(80px,20vw,200px);
+    font-family: 'Georgia', serif;
+    font-weight: 900;
+    color: #e50914;
+    letter-spacing: -4px;
+    text-shadow:
+      0 0 40px rgba(229,9,20,0.8),
+      0 0 80px rgba(229,9,20,0.4),
+      0 0 120px rgba(229,9,20,0.2);
+    transform: scale(0.1);
+    opacity: 0;
+    pointer-events:none;
+  }
+  .intro-logo.animate {
+    animation: netflixLogo 2.5s cubic-bezier(0.2,0,0.8,1) forwards;
+  }
+  @keyframes netflixLogo {
+    0%   { transform:scale(0.1) skewX(-5deg); opacity:0; }
+    20%  { opacity:1; }
+    60%  { transform:scale(1.08) skewX(0deg); opacity:1; }
+    80%  { transform:scale(0.98); }
+    100% { transform:scale(1); opacity:1; }
+  }
+  .intro-subtitle {
+    position:absolute;
+    top: calc(50% + clamp(55px,12vw,115px));
+    font-size: clamp(15px, 4vw, 26px);
+    color: #aaa;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    opacity: 0;
+    pointer-events:none;
+  }
+  .intro-subtitle.animate {
+    animation: fadeInSub 1s ease 2s forwards;
+  }
+  @keyframes fadeInSub { to { opacity:1; } }
+
+  /* ─── PROFILES ─── */
+  #screen-profiles {
+    background: radial-gradient(ellipse at center, #1a0a0a 0%, #000 70%);
+    padding: 20px;
+  }
+  .profiles-title {
+    font-size: clamp(18px,4.5vw,26px);
+    color:#aaa;
+    letter-spacing:4px;
+    text-transform:uppercase;
+    margin-bottom: clamp(28px,6vw,48px);
+    text-align:center;
+  }
+  .profiles-row {
+    display:flex;
+    gap: clamp(28px, 8vw, 80px);
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .profile-card {
+    display:flex; flex-direction:column; align-items:center;
+    cursor:pointer; gap:14px;
+    transition:transform 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .profile-card:active { transform:scale(0.95); }
+  .profile-card:hover { transform:scale(1.05); }
+  .profile-card:hover .profile-avatar { border-color:#e50914; box-shadow:0 0 30px rgba(229,9,20,0.5); }
+  .profile-card:hover .profile-name { color:#fff; }
+  .profile-avatar {
+    width: clamp(110px, 28vw, 160px);
+    height: clamp(110px, 28vw, 160px);
+    border-radius:8px;
+    border:3px solid #333;
+    overflow:hidden;
+    transition:border-color 0.2s, box-shadow 0.2s;
+    background: #111;
+  }
+  .profile-avatar img {
+    width:100%; height:100%;
+    object-fit:cover; object-position:center top;
+    display:block;
+  }
+  .profile-name {
+    font-size: clamp(20px,5.5vw,26px);
+    color:#aaa;
+    letter-spacing:1px;
+    transition:color 0.2s;
+  }
+
+  /* ─── UNLOCK BASE ─── */
+  .unlock-screen {
+    width:100%; min-height:100%;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:clamp(60px,12vw,80px) 24px clamp(32px,8vw,48px);
+    gap:clamp(14px,3vw,22px);
+  }
+  .unlock-hint {
+    font-size: clamp(17px,5vw,22px);
+    color:#ccc;
+    text-align:center;
+    max-width:460px;
+    line-height:1.7;
+    font-style:italic;
+    padding:0 8px;
+  }
+  .pin-boxes {
+    display:flex;
+    gap:clamp(8px,2.5vw,14px);
+    margin:4px 0;
+  }
+  .pin-box {
+    width: clamp(54px,14vw,72px);
+    height: clamp(64px,16vw,84px);
+    background:rgba(255,255,255,0.05);
+    border:2px solid rgba(255,255,255,0.3);
+    border-radius:10px;
+    font-size: clamp(26px,7vw,38px);
+    font-weight:bold;
+    color:#fff;
+    text-align:center;
+    text-transform:uppercase;
+    outline:none;
+    caret-color:transparent;
+    transition:border-color 0.2s, background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pin-box:focus { border-color:#e50914; background:rgba(229,9,20,0.1); }
+  .pin-box.error { border-color:#ff4444; animation:shake 0.4s ease; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)} 60%{transform:translateX(10px)}
+  }
+  .pin-box.success { border-color:#44ff88; background:rgba(68,255,136,0.1); }
+  .unlock-btn {
+    background:#e50914; color:#fff;
+    border:none; padding:clamp(14px,3.5vw,18px) clamp(36px,9vw,54px);
+    font-size:clamp(17px,4.5vw,22px); border-radius:6px;
+    cursor:pointer; letter-spacing:2px;
+    text-transform:uppercase;
+    transition:background 0.2s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    min-width:160px;
+  }
+  .unlock-btn:hover { background:#f40612; transform:scale(1.03); }
+  .unlock-btn:active { transform:scale(0.95); }
+  .back-btn {
+    position:absolute; top:16px; left:16px;
+    background:none; border:none;
+    color:#666; font-size:clamp(16px,4.5vw,20px);
+    cursor:pointer; letter-spacing:1px;
+    padding:10px 14px;
+    transition:color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .back-btn:hover, .back-btn:active { color:#fff; }
+
+  /* idle countdown message */
+  .idle-warning {
+    font-size:clamp(16px,5vw,20px);
+    color:#e50914;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    font-weight:bold;
+    opacity:0;
+    transition:opacity 0.4s;
+    text-align:center;
+    min-height:22px;
+  }
+  .idle-warning.visible { opacity:1; }
+
+  /* ─── NADESKA UNLOCK ─── */
+  #screen-nadeska-unlock {
+    background: radial-gradient(ellipse at 30% 40%, #1a0a2e 0%, #0a0010 50%, #000 100%);
+  }
+  .nadeska-lock-icon {
+    font-size:clamp(56px,14vw,80px);
+    margin-bottom:8px;
+    filter:drop-shadow(0 0 20px rgba(180,100,255,0.6));
+    animation:floatIcon 3s ease-in-out infinite;
+  }
+  @keyframes floatIcon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  #screen-nadeska-unlock .unlock-hint {
+    color:#d4aaff;
+  }
+  #screen-nadeska-unlock .pin-box:focus { border-color:#9b59b6; background:rgba(155,89,182,0.15); }
+
+  /* ─── FRANCESKA UNLOCK ─── */
+  #screen-franceska-unlock {
+    background: #000;
+  }
+  #screen-franceska-unlock::before {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse at 50% 20%, rgba(20,20,30,0.9) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.012) 60px, rgba(255,255,255,0.012) 61px),
+      repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.012) 60px, rgba(255,255,255,0.012) 61px);
+    pointer-events:none;
+    z-index:0;
+  }
+  #screen-franceska-unlock .unlock-screen { position:relative; z-index:1; }
+  .sherlock-frame {
+    display:flex; flex-direction:column; align-items:center; gap:clamp(8px,2vw,14px);
+  }
+  .sherlock-top {
+    font-size: clamp(28px,8vw,46px);
+    font-weight:bold;
+    color:#e8e8e8;
+    letter-spacing:clamp(8px,3vw,16px);
+    text-transform:uppercase;
+    font-family:'Georgia', serif;
+    text-shadow:0 0 30px rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.8);
+  }
+  .sherlock-bottom {
+    font-size: clamp(24px,7vw,40px);
+    font-weight:bold;
+    color:#c0c0c0;
+    letter-spacing:clamp(5px,2vw,10px);
+    text-transform:uppercase;
+    font-family:'Georgia', serif;
+    text-shadow:0 0 20px rgba(255,255,255,0.1);
+    display:flex; align-items:center; gap:10px;
+  }
+  .sherlock-lock-icon { font-size:clamp(32px,8vw,44px); transition:transform 0.3s; }
+  .sherlock-lock-icon.unlocked { transform:rotate(-20deg); }
+  #screen-franceska-unlock .pin-box {
+    border-color:rgba(255,255,255,0.15);
+    background:rgba(255,255,255,0.03);
+    color:#f0f0f0;
+  }
+  #screen-franceska-unlock .pin-box:focus {
+    border-color:rgba(255,255,255,0.7);
+    background:rgba(255,255,255,0.07);
+    box-shadow:0 0 16px rgba(255,255,255,0.08);
+  }
+  #screen-franceska-unlock .unlock-btn {
+    background:rgba(255,255,255,0.1);
+    border:1px solid rgba(255,255,255,0.25);
+    letter-spacing:4px;
+  }
+  #screen-franceska-unlock .unlock-btn:hover {
+    background:rgba(255,255,255,0.18);
+    border-color:rgba(255,255,255,0.5);
+  }
+  .sherlock-deco {
+    font-size:clamp(60px,16vw,88px);
+    margin-bottom:4px;
+    animation:floatIcon 4s ease-in-out infinite;
+    filter:drop-shadow(0 0 24px rgba(255,255,255,0.12)) grayscale(0.4);
+  }
+  .sherlock-divider {
+    width:clamp(120px,40vw,220px);
+    height:1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    margin:2px 0;
+  }
+  .sherlock-quote {
+    font-size: clamp(14px,3.8vw,18px);
+    color:#F1f1f1;
+    font-style:italic;
+    text-align:center;
+    max-width:340px;
+    margin-top:4px;
+    line-height:1.7;
+    letter-spacing:0.5px;
+  }
+
+  /* ─── WELCOME SCREENS ─── */
+  .welcome-content {
+    max-width:600px;
+    text-align:center;
+    padding:40px 24px;
+    display:flex; flex-direction:column;
+    align-items:center; gap:24px;
+  }
+  .welcome-avatar {
+    width: clamp(80px,20vw,110px);
+    height: clamp(80px,20vw,110px);
+    border-radius:50%;
+    overflow:hidden;
+    border:3px solid rgba(255,255,255,0.2);
+    flex-shrink:0;
+  }
+  .welcome-avatar img {
+    width:100%; height:100%;
+    object-fit:cover; object-position:center top;
+    display:block;
+  }
+  .welcome-name {
+    font-size: clamp(32px,8vw,52px);
+    font-weight:bold;
+    color:#fff;
+    letter-spacing:2px;
+  }
+  .welcome-irony {
+    font-size: clamp(16px,4.5vw,21px);
+    color:#ccc;
+    line-height:1.8;
+    font-style:italic;
+    background:rgba(255,255,255,0.05);
+    border-left:3px solid;
+    padding:16px 20px;
+    border-radius:0 8px 8px 0;
+    text-align:left;
+  }
+  .welcome-tender {
+    font-size: clamp(18px,5vw,24px);
+    color:#fff;
+    line-height:1.8;
+    font-style:italic;
+  }
+  .welcome-continue-btn {
+    margin-top:8px;
+    background:transparent;
+    border:2px solid rgba(255,255,255,0.3);
+    color:#fff; padding:clamp(13px,3vw,16px) clamp(32px,8vw,48px);
+    font-size:clamp(16px,4vw,20px); border-radius:4px;
+    cursor:pointer; letter-spacing:2px;
+    text-transform:uppercase;
+    transition:border-color 0.2s, background 0.2s;
+  }
+  .welcome-continue-btn:hover {
+    border-color:#fff;
+    background:rgba(255,255,255,0.1);
+  }
+
+  #screen-nadeska-welcome {
+    background: radial-gradient(ellipse at 30% 40%, #1a0a2e 0%, #0a0010 60%, #000 100%);
+  }
+  #screen-nadeska-welcome .welcome-irony { border-color:#9b59b6; }
+  #screen-nadeska-welcome .welcome-avatar { border-color:rgba(155,89,182,0.5); }
+
+  #screen-franceska-welcome {
+    background: radial-gradient(ellipse at 60% 30%, #1a1200 0%, #0d0900 60%, #000 100%);
+  }
+  #screen-franceska-welcome .welcome-irony { border-color:#c9a84c; }
+  #screen-franceska-welcome .welcome-avatar { border-color:rgba(201,168,76,0.5); }
+
+  /* ─── SUCCESS ─── */
+  #screen-success { background:#000; }
+  .success-content {
+    text-align:center;
+    z-index:2;
+    display:flex; flex-direction:column;
+    align-items:center; gap:20px;
+  }
+  .success-icon { font-size:80px; animation:bounceIn 0.6s ease; }
+  @keyframes bounceIn {
+    0%  { transform:scale(0); opacity:0; }
+    60% { transform:scale(1.2); }
+    100%{ transform:scale(1); opacity:1; }
+  }
+  .success-title {
+    font-size: clamp(24px,5vw,42px);
+    font-weight:bold; color:#fff;
+    letter-spacing:2px;
+  }
+  .success-subtitle {
+    font-size: clamp(14px,2.5vw,20px);
+    color:#aaa; font-style:italic;
+  }
+  #confetti-canvas {
+    position:fixed; inset:0; pointer-events:none; z-index:1;
+  }
+
+  /* ─── VANNACCI OVERLAY ─── */
+  #vannacci-overlay {
+    position:fixed; inset:0;
+    z-index:9999;
+    pointer-events:all;
+    cursor:pointer;
+  }
+  #vannacci-img {
+    position:absolute;
+    width: clamp(100px,20vw,160px);
+    height:auto;
+    filter:drop-shadow(0 4px 20px rgba(0,0,0,0.8));
+    cursor:pointer;
+    border-radius:8px;
+    transition:none;
+  }
+
+  /* ─── WELCOME scrollable on mobile ─── */
+  #screen-nadeska-welcome,
+  #screen-franceska-welcome {
+    overflow-y: auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+  .welcome-content {
+    margin: auto;
+    padding-top: clamp(28px,6vh,48px);
+    padding-bottom: clamp(28px,6vh,48px);
+  }
+
+  /* ─── CALENDAR ─── */
+  #screen-calendar {
+    background: radial-gradient(ellipse at 50% 0%, #1a0505 0%, #000 60%);
+    overflow-y: auto;
+    justify-content: flex-start;
+    align-items: center;
+    padding: clamp(20px,4vw,40px) 16px clamp(28px,5vw,48px);
+  }
+  .cal-wrapper {
+    width:100%; max-width:480px;
+    display:flex; flex-direction:column;
+    align-items:center; gap:clamp(16px,3vw,24px);
+    margin:auto;
+  }
+  .cal-title {
+    font-size:clamp(16px,4.5vw,22px);
+    color:#aaa;
+    text-align:center;
+    line-height:1.6;
+    font-style:italic;
+    padding:0 8px;
+  }
+  .cal-title strong { color:#e50914; font-style:normal; }
+  .cal-month {
+    font-size:clamp(26px,7vw,38px);
+    font-weight:bold;
+    color:#fff;
+    letter-spacing:3px;
+    text-transform:uppercase;
+  }
+  .cal-grid {
+    width:100%;
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap:clamp(4px,1.5vw,8px);
+  }
+  .cal-header {
+    text-align:center;
+    font-size:clamp(13px,3.5vw,17px);
+    color:#555;
+    font-weight:bold;
+    letter-spacing:1px;
+    padding:4px 0;
+    text-transform:uppercase;
+  }
+  .cal-header.weekend { color:#e50914; }
+  .cal-day {
+    aspect-ratio:1;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:8px;
+    font-size:clamp(15px,4.5vw,22px);
+    font-weight:500;
+    transition:all 0.18s ease;
+    -webkit-tap-highlight-color:transparent;
+    position:relative;
+  }
+  .cal-day.empty { background:transparent; }
+  .cal-day.weekday {
+    color:#333;
+    background:rgba(255,255,255,0.03);
+    cursor:default;
+  }
+  .cal-day.available {
+    color:#fff;
+    background:rgba(229,9,20,0.12);
+    border:1.5px solid rgba(229,9,20,0.3);
+    cursor:pointer;
+    font-weight:700;
+  }
+  .cal-day.available:hover, .cal-day.available:active {
+    background:rgba(229,9,20,0.3);
+    border-color:#e50914;
+    transform:scale(1.08);
+  }
+  .cal-day.selected {
+    background:#e50914 !important;
+    border-color:#e50914 !important;
+    color:#fff !important;
+    box-shadow:0 0 20px rgba(229,9,20,0.6);
+    transform:scale(1.1);
+  }
+  .cal-day.blocked {
+    color:#2a2a2a;
+    background:rgba(255,255,255,0.02);
+    border:1.5px dashed #1a1a1a;
+    cursor:not-allowed;
+    text-decoration:line-through;
+    font-weight:400;
+  }
+  .cal-confirm-btn {
+    background:#e50914; color:#fff;
+    border:none; padding:clamp(15px,3.5vw,18px) clamp(40px,10vw,64px);
+    font-size:clamp(17px,4.5vw,22px);
+    border-radius:6px; cursor:pointer;
+    letter-spacing:3px; text-transform:uppercase;
+    transition:background 0.2s, transform 0.1s, opacity 0.2s;
+    -webkit-tap-highlight-color:transparent;
+    opacity:0.4;
+    pointer-events:none;
+  }
+  .cal-confirm-btn.ready {
+    opacity:1; pointer-events:all;
+  }
+  .cal-confirm-btn.ready:hover { background:#f40612; transform:scale(1.03); }
+  .cal-confirm-btn.ready:active { transform:scale(0.96); }
+  .cal-selected-label {
+    font-size:clamp(16px,4.5vw,20px);
+    color:#aaa;
+    font-style:italic;
+    min-height:20px;
+    text-align:center;
+  }
+  .cal-selected-label span { color:#e50914; font-style:normal; font-weight:bold; }
+
+  /* ─── FINAL SCREEN ─── */
+  #screen-final {
+    background:#000;
+    text-align:center;
+    padding:24px;
+  }
+  .final-heart {
+    font-size:clamp(80px,22vw,150px);
+    line-height:1;
+    animation:heartbeat 1.2s ease-in-out infinite;
+    filter:drop-shadow(0 0 40px rgba(229,9,20,0.7));
+  }
+  @keyframes heartbeat {
+    0%,100% { transform:scale(1); }
+    14%     { transform:scale(1.18); }
+    28%     { transform:scale(1); }
+    42%     { transform:scale(1.1); }
+    56%     { transform:scale(1); }
+  }
+  .final-text {
+    font-size:clamp(24px,7vw,42px);
+    font-weight:bold;
+    color:#fff;
+    line-height:1.4;
+    max-width:520px;
+    opacity:0;
+    transform:translateY(20px);
+    animation:riseIn 0.7s ease 0.5s forwards;
+  }
+  .final-subtext {
+    font-size:clamp(18px,5vw,26px);
+    color:#666;
+    font-style:italic;
+    opacity:0;
+    animation:riseIn 0.7s ease 1.1s forwards;
+  }
+  @keyframes riseIn {
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  /* ─── VANNACCI MESSAGE ─── */
+  #vannacci-msg {
+    position:absolute;
+    top:clamp(14px,5vw,32px);
+    left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.85);
+    color:#fff;
+    font-size:clamp(13px,3.5vw,17px);
+    font-weight:bold;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:10px 18px;
+    border-radius:8px;
+    border:1px solid rgba(229,9,20,0.5);
+    white-space:normal;
+    text-align:center;
+    max-width:clamp(240px,70vw,400px);
+    width:max-content;
+    display:none;
+  }
+
+  /* ─── FADE TRANSITIONS ─── */
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  /* scrollable unlock screens */
+  #screen-nadeska-unlock .unlock-screen,
+  #screen-franceska-unlock .unlock-screen {
+    overflow-y:auto;
+    max-height:100vh;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════ INTRO ══════════════════════ -->
+<div id="screen-intro" class="screen active">
+  <div id="intro-tap-overlay">
+    <div class="tap-finger">👆</div>
+    <div class="tap-here-text">TAP HERE</div>
+  </div>
+  <div class="intro-logo" id="introLogo">aaN</div>
+  <div class="intro-subtitle" id="introSubtitle">✨ Andiamo a Napoli girlZ ✨</div>
+</div>
+
+<!-- ══════════════════════ PROFILES ══════════════════════ -->
+<div id="screen-profiles" class="screen">
+  <p class="profiles-title">Chi sei?</p>
+  <div class="profiles-row">
+    <div class="profile-card" onclick="gotoUnlock('nadeska')">
+      <div class="profile-avatar"><img src="images/nadeska.jpeg" alt="Nadeska"></div>
+      <div class="profile-name">Nadeska🐈</div>
+    </div>
+    <div class="profile-card" onclick="gotoUnlock('franceska')">
+      <div class="profile-avatar"><img src="images/franceska.jpeg" alt="Franceska"></div>
+      <div class="profile-name">Franceska🧚‍♀️</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ NADESKA UNLOCK ══════════════════════ -->
+<div id="screen-nadeska-unlock" class="screen">
+  <div class="unlock-screen">
+    <button class="back-btn" onclick="clearIdleTimer('nadeska');goTo('profiles')">← Indietro</button>
+    <div class="nadeska-lock-icon">🔮</div>
+    <p style="font-size:clamp(28px,7vw,40px);color:#d4aaff;letter-spacing:3px;font-weight:bold;">Nadeska🐈</p>
+    <p class="unlock-hint">"E' sempre con noi, ci fa spesso tremare, la nostra piccolaa?"</p>
+    <div class="pin-boxes" id="nadeska-boxes">
+      <input class="pin-box" maxlength="1" id="n0" autocomplete="off" inputmode="text">
+      <input class="pin-box" maxlength="1" id="n1" autocomplete="off" inputmode="text">
+      <input class="pin-box" maxlength="1" id="n2" autocomplete="off" inputmode="text">
+      <input class="pin-box" maxlength="1" id="n3" autocomplete="off" inputmode="text">
+    </div>
+    <div class="idle-warning" id="nadeska-idle-warn">VELOCE IL TEMPO STRINGE</div>
+    <button class="unlock-btn" onclick="checkPin('nadeska')">Sblocca</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ FRANCESKA UNLOCK ══════════════════════ -->
+<div id="screen-franceska-unlock" class="screen">
+  <div class="unlock-screen">
+    <button class="back-btn" onclick="clearIdleTimer('franceska');goTo('profiles')">← Indietro</button>
+    <div class="sherlock-deco">🕵️</div>
+    <div class="sherlock-frame">
+      <div class="sherlock-top">I &nbsp; A M</div>
+      <div class="sherlock-divider"></div>
+      <div class="pin-boxes" id="franceska-boxes">
+        <input class="pin-box" maxlength="1" id="f0" autocomplete="off" inputmode="text">
+        <input class="pin-box" maxlength="1" id="f1" autocomplete="off" inputmode="text">
+        <input class="pin-box" maxlength="1" id="f2" autocomplete="off" inputmode="text">
+        <input class="pin-box" maxlength="1" id="f3" autocomplete="off" inputmode="text">
+      </div>
+      <div class="sherlock-divider"></div>
+      <div class="sherlock-bottom">
+        <span class="sherlock-lock-icon" id="sherlock-lock">🔒</span>
+        <span>L O C K E D</span>
+      </div>
+    </div>
+    <div class="idle-warning" id="franceska-idle-warn">VELOCE IL TEMPO STRINGE</div>
+    <button class="unlock-btn" onclick="checkPin('franceska')">Sblocca</button>
+    <p class="sherlock-quote">"Il mondo è pieno di cose ovvie che nessuno si cura mai di osservare." — SH</p>
+  </div>
+</div>
+
+<!-- ══════════════════════ NADESKA WELCOME ══════════════════════ -->
+<div id="screen-nadeska-welcome" class="screen">
+  <div class="welcome-content">
+    <div class="welcome-avatar"><img src="images/nadeska.jpeg" alt="Nadeska"></div>
+    <p class="welcome-name">Ciao, Nadeska</p>
+    <p class="welcome-irony">
+      Nadeska. Un nome che significa <em>speranza</em>.
+      Speranza di cosa, esattamente? Di trovare parcheggio a Napoli?
+      Di ricevere il caffè in meno di 30 secondi? Di non aspettare
+      mezz'ora davanti a una pizzeria con 200 persone in fila?
+      Il tuo nome porta un peso enorme, piccola ottimista.
+    </p>
+    <p class="welcome-tender">
+      Ma in fondo... portare speranza è il dono piu' raro.
+      E tu lo fai senza nemmeno accorgertene. Ti amo <3 ✨
+    </p>
+    <button class="welcome-continue-btn" onclick="goTo('calendar')">Avanti →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ FRANCESKA WELCOME ══════════════════════ -->
+<div id="screen-franceska-welcome" class="screen">
+  <div class="welcome-content">
+    <div class="welcome-avatar"><img src="images/franceska.jpeg" alt="Franceska"></div>
+    <p class="welcome-name">Ciao, Franceska</p>
+    <p class="welcome-irony">
+      Franceska. <em>Franceska</em>.
+      Il nome piu' comune d'Italia, scelto probabilmente lanciando
+      una monetina dopo 5 minuti di brainstorming.
+      "Dai, mettiamo Franceska, tanto funziona sempre."
+      I tuoi genitori, dei veri pionieri della fantasia.
+    </p>
+    <p class="welcome-tender">
+      Pero' sai cosa? I nomi comuni li portano persone straordinarie.
+      E tu sei la prova vivente che non serve un nome esotico
+      per essere del tutto unica. 🌟
+    </p>
+    <button class="welcome-continue-btn" onclick="goTo('calendar')">Avanti →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ CALENDAR ══════════════════════ -->
+<div id="screen-calendar" class="screen">
+  <div class="cal-wrapper">
+    <p class="cal-title">
+      Dato che hai deciso di unirti alla ciurma, scegli in quale giorno (anche più di uno) desideri che la mia auto venga rubata in <strong>nApLes</strong>
+    </p>
+    <p class="cal-month">Novembre 2026</p>
+    <div class="cal-grid" id="cal-grid"></div>
+    <p class="cal-selected-label" id="cal-selected-label">Nessun giorno selezionato</p>
+    <button class="cal-confirm-btn" id="cal-confirm-btn" onclick="confirmCalendar()">Conferma</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ FINAL ══════════════════════ -->
+<div id="screen-final" class="screen">
+  <div class="final-heart">❤️</div>
+  <p class="final-text" id="final-text">Grazie, ora puoi andare a fanculo, con affetto</p>
+  <p class="final-subtext" id="final-subtext">A presto a Napoli 🍕</p>
+</div>
+
+<!-- ══════════════════════ SUCCESS ══════════════════════ -->
+<div id="screen-success" class="screen">
+  <canvas id="confetti-canvas"></canvas>
+  <div class="success-content">
+    <div class="success-icon">🎉</div>
+    <p class="success-title">Accesso Riuscito!</p>
+    <p class="success-subtitle" id="success-subtitle">Benvenuta...</p>
+  </div>
+</div>
+
+<!-- ══════════════════════ VANNACCI OVERLAY ══════════════════════ -->
+<div id="vannacci-overlay" style="display:none;" onclick="dismissVannacci()">
+  <img id="vannacci-img" src="images/vannacci.png" alt="Generale Polpacci">
+  <div id="vannacci-msg"></div>
+</div>
+
+<audio id="vannacci-audio" src="audio/AudioCleaner.mp3" preload="auto"></audio>
+<audio id="netflix-audio" src="audio/Netflix New Logo Animation 2019.mp3" preload="auto"></audio>
+<audio id="pianobar-audio" src="audio/Piano Bar-compressed.mp3" preload="auto" loop></audio>
+<audio id="napule-audio" src="audio/Napule.mp3" preload="auto"></audio>
+
+<script>
+// ─── SCREEN MANAGEMENT ───────────────────────────────────────────────────────
+const screens = [
+  'intro','profiles',
+  'nadeska-unlock','franceska-unlock',
+  'nadeska-welcome','franceska-welcome',
+  'success'
+];
+let currentScreen = 'intro';
+
+function goTo(name) {
+  const prev = document.getElementById('screen-' + currentScreen);
+  const next = document.getElementById('screen-' + name);
+  if (!next) return;
+  prev.classList.remove('active');
+  setTimeout(() => {
+    next.classList.add('active');
+    currentScreen = name;
+    if (name === 'calendar') {
+      calSelectedDays  = new Set();
+      blockedDismissed = new Set();
+      buildCalendar();
+      updateCalendarUI();
+      startCalendarIdleTimer();
+    }
+  }, 300);
+}
+
+let idleTimer = null;
+
+function gotoUnlock(who) {
+  clearPinBoxes(who);
+  goTo(who + '-unlock');
+  setTimeout(() => {
+    const first = document.getElementById(who === 'nadeska' ? 'n0' : 'f0');
+    if (first) first.focus();
+  }, 500);
+  startIdleTimer(who);
+}
+
+function startIdleTimer(who) {
+  clearIdleTimer(who);
+  const warnEl = document.getElementById(who + '-idle-warn');
+  if (warnEl) warnEl.classList.remove('visible');
+
+  idleTimer = setTimeout(() => {
+    const warnEl = document.getElementById(who + '-idle-warn');
+    if (warnEl) warnEl.classList.add('visible');
+    setTimeout(() => triggerVannacci(), 400);
+  }, 8000);
+}
+
+function clearIdleTimer(who) {
+  if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  const warnEl = document.getElementById(who + '-idle-warn');
+  if (warnEl) warnEl.classList.remove('visible');
+}
+
+function resetIdleTimer(who) {
+  if (idleTimer) startIdleTimer(who);
+}
+
+// ─── INTRO ────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  let introStarted = false;
+
+  function startIntro() {
+    if (introStarted) return;
+    introStarted = true;
+
+    // Fade out the tap overlay
+    document.getElementById('intro-tap-overlay').classList.add('hidden');
+
+    // Play audio — guaranteed inside a user gesture event
+    const netflixAudio = document.getElementById('netflix-audio');
+    netflixAudio.play().catch(() => {});
+    netflixAudio.addEventListener('ended', () => {
+      const pb = document.getElementById('pianobar-audio');
+      pb.volume = 0.2;
+      pb.play().catch(() => {});
+    }, { once: true });
+
+    // Trigger logo + subtitle animations
+    document.getElementById('introLogo').classList.add('animate');
+    document.getElementById('introSubtitle').classList.add('animate');
+
+    // Advance to profiles after animation (~4.2s)
+    setTimeout(() => goTo('profiles'), 4200);
+  }
+
+  document.getElementById('screen-intro').addEventListener('touchstart', startIntro, { once: true });
+  document.getElementById('screen-intro').addEventListener('click',      startIntro, { once: true });
+});
+
+// ─── PIN BOXES LOGIC ─────────────────────────────────────────────────────────
+function setupPinBoxes(prefix, count) {
+  const who = prefix === 'n' ? 'nadeska' : 'franceska';
+  for (let i = 0; i < count; i++) {
+    const box = document.getElementById(prefix + i);
+    box.addEventListener('focus', () => startIdleTimer(who));
+    box.addEventListener('input', (e) => {
+      startIdleTimer(who);
+      const val = e.target.value.toUpperCase().replace(/[^A-Z]/g,'');
+      e.target.value = val ? val[val.length-1] : '';
+      if (e.target.value && i < count - 1) {
+        document.getElementById(prefix + (i+1)).focus();
+      }
+    });
+    box.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !e.target.value && i > 0) {
+        document.getElementById(prefix + (i-1)).focus();
+      }
+      if (e.key === 'Enter') {
+        if (prefix === 'n') checkPin('nadeska');
+        else checkPin('franceska');
+      }
+    });
+    box.addEventListener('keyup', (e) => {
+      const val = e.target.value.toUpperCase().replace(/[^A-Z]/g,'');
+      e.target.value = val ? val[0] : '';
+    });
+  }
+}
+
+setupPinBoxes('n', 4);
+setupPinBoxes('f', 4);
+
+function getPin(prefix, count) {
+  let pin = '';
+  for (let i = 0; i < count; i++) {
+    pin += (document.getElementById(prefix + i).value || '').toUpperCase();
+  }
+  return pin;
+}
+
+function clearPinBoxes(who) {
+  const prefix = who === 'nadeska' ? 'n' : 'f';
+  const count  = who === 'nadeska' ? 4 : 4;
+  for (let i = 0; i < count; i++) {
+    const box = document.getElementById(prefix + i);
+    box.value = '';
+    box.classList.remove('error','success');
+  }
+}
+
+function shakeBoxes(prefix, count) {
+  for (let i = 0; i < count; i++) {
+    const box = document.getElementById(prefix + i);
+    box.classList.remove('error');
+    void box.offsetWidth; // reflow
+    box.classList.add('error');
+    setTimeout(() => box.classList.remove('error'), 500);
+  }
+}
+
+function successBoxes(prefix, count) {
+  for (let i = 0; i < count; i++) {
+    document.getElementById(prefix + i).classList.add('success');
+  }
+}
+
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const sbClient = supabase.createClient(
+  'https://ajpeqxkgmrshuzcmmznj.supabase.co',
+  'sb_publishable_HHaVgJRLq1xIP7ZLTMAsaw_nVriZi6a'
+);
+
+let currentUser = null;
+let vannacciActive = false;
+let vannacciDismissCallback = null;
+let vannacciCanDismiss = false;
+
+function checkPin(who) {
+  if (who === 'nadeska') {
+    const pin = getPin('n', 4);
+    if (pin === 'CLIO') {
+      clearIdleTimer('nadeska');
+      successBoxes('n', 4);
+      currentUser = 'nadeska';
+      setTimeout(() => goTo('nadeska-welcome'), 600);
+    } else {
+      startIdleTimer('nadeska');
+      shakeBoxes('n', 4);
+      triggerVannacci();
+    }
+  } else {
+    const pin = getPin('f', 4);
+    if (pin === 'SHER') {
+      clearIdleTimer('franceska');
+      successBoxes('f', 4);
+      currentUser = 'franceska';
+      document.getElementById('sherlock-lock').textContent = '🔓';
+      document.getElementById('sherlock-lock').classList.add('unlocked');
+      setTimeout(() => goTo('franceska-welcome'), 700);
+    } else {
+      startIdleTimer('franceska');
+      shakeBoxes('f', 4);
+      triggerVannacci();
+    }
+  }
+}
+
+// ─── SUCCESS / CONFETTI ───────────────────────────────────────────────────────
+let confettiRunning = false;
+const confettiParticles = [];
+
+document.getElementById('screen-success').addEventListener('transitionend', () => {
+  if (currentScreen === 'success' && !confettiRunning) {
+    startConfetti();
+    const subtitle = document.getElementById('success-subtitle');
+    subtitle.textContent = 'Benvenuta! Sei riuscita a entrare. Complimenti, detective! 🕵️✨';
+  }
+});
+
+function startConfetti() {
+  confettiRunning = true;
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colors = ['#e50914','#fff','#c9a84c','#9b59b6','#2ecc71','#3498db','#f39c12'];
+  confettiParticles.length = 0;
+
+  for (let i = 0; i < 180; i++) {
+    confettiParticles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      w: Math.random() * 12 + 6,
+      h: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360,
+      vx: (Math.random() - 0.5) * 3,
+      vy: Math.random() * 4 + 2,
+      vr: (Math.random() - 0.5) * 6,
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confettiParticles.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x + p.w/2, p.y + p.h/2);
+      ctx.rotate(p.rot * Math.PI/180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.rot += p.vr;
+      if (p.y > canvas.height + 20) {
+        p.y = -20;
+        p.x = Math.random() * canvas.width;
+      }
+    });
+    if (confettiRunning) requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ─── VANNACCI ────────────────────────────────────────────────────────────────
+let vannacciAnim = null;
+
+function triggerVannacci(customMsg, onDismiss) {
+  if (vannacciActive) return;
+  vannacciActive = true;
+  vannacciCanDismiss = false;
+  setTimeout(() => { vannacciCanDismiss = true; }, 2000);
+  vannacciDismissCallback = onDismiss || null;
+
+  document.getElementById('pianobar-audio').volume = 0.05;
+
+  const overlay = document.getElementById('vannacci-overlay');
+  const img     = document.getElementById('vannacci-img');
+  const msgEl   = document.getElementById('vannacci-msg');
+  const audio   = document.getElementById('vannacci-audio');
+
+  if (customMsg) {
+    msgEl.textContent = customMsg;
+    msgEl.style.display = 'block';
+  } else {
+    msgEl.style.display = 'none';
+  }
+
+  overlay.style.display = 'block';
+
+  let x  = Math.random() * (window.innerWidth  - 160);
+  let y  = Math.random() * (window.innerHeight - 200);
+  let vx = (Math.random() > 0.5 ? 1 : -1) * (2.5 + Math.random() * 2);
+  let vy = (Math.random() > 0.5 ? 1 : -1) * (2.5 + Math.random() * 2);
+
+  img.style.left = x + 'px';
+  img.style.top  = y + 'px';
+
+  audio.currentTime = 0;
+  audio.volume = 0.7;
+  audio.play().catch(() => {});
+
+  function bounce() {
+    x += vx; y += vy;
+    const iw = img.offsetWidth  || 140;
+    const ih = img.offsetHeight || 140;
+    if (x < 0) { x = 0; vx = Math.abs(vx); }
+    if (y < 0) { y = 0; vy = Math.abs(vy); }
+    if (x + iw > window.innerWidth)  { x = window.innerWidth  - iw; vx = -Math.abs(vx); }
+    if (y + ih > window.innerHeight) { y = window.innerHeight - ih; vy = -Math.abs(vy); }
+    img.style.left = x + 'px';
+    img.style.top  = y + 'px';
+    vannacciAnim = requestAnimationFrame(bounce);
+  }
+  vannacciAnim = requestAnimationFrame(bounce);
+}
+
+function dismissVannacci() {
+  if (!vannacciActive || !vannacciCanDismiss) return;
+  cancelAnimationFrame(vannacciAnim);
+  const audio = document.getElementById('vannacci-audio');
+  audio.pause();
+  audio.currentTime = 0;
+  document.getElementById('vannacci-overlay').style.display = 'none';
+  document.getElementById('vannacci-msg').style.display = 'none';
+  vannacciActive = false;
+  document.getElementById('pianobar-audio').volume = 0.2;
+  if (vannacciDismissCallback) { vannacciDismissCallback(); vannacciDismissCallback = null; }
+  // Restart idle timer on the active screen
+  if (currentScreen === 'nadeska-unlock') startIdleTimer('nadeska');
+  if (currentScreen === 'franceska-unlock') startIdleTimer('franceska');
+  if (currentScreen === 'calendar') startCalendarIdleTimer();
+}
+
+// ─── CALENDAR ────────────────────────────────────────────────────────────────
+// November 2026: starts on Sunday (Italian grid Mon-Sun)
+// Sat: 7,14,21,28  |  Sun: 8,15,22,29  (1 Nov escluso: già passato)
+// Blocked (trigger Vannacci): 7(Sat), 15(Sun), 29(Sun)
+const CAL_DAYS_ITALIAN = ['L','M','M','G','V','S','D'];
+const BLOCKED_DAYS  = new Set([7, 15, 29]);
+const WEEKEND_DAYS  = new Set([7, 8, 14, 15, 21, 22, 28, 29]); // 1 escluso
+const PAST_DAYS     = new Set([1]); // già passato
+
+let calSelectedDays = new Set();
+let blockedDismissed = new Set();
+let calIdleTimer = null;
+
+function startCalendarIdleTimer() {
+  clearCalendarIdleTimer();
+  if (calSelectedDays.size > 0) return; // non parte se già ha scelto
+  calIdleTimer = setTimeout(() => {
+    if (calSelectedDays.size === 0) triggerVannacci();
+  }, 12000);
+}
+
+function clearCalendarIdleTimer() {
+  if (calIdleTimer) { clearTimeout(calIdleTimer); calIdleTimer = null; }
+}
+
+function buildCalendar() {
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  CAL_DAYS_ITALIAN.forEach((d, i) => {
+    const h = document.createElement('div');
+    h.className = 'cal-header' + (i >= 5 ? ' weekend' : '');
+    h.textContent = d;
+    grid.appendChild(h);
+  });
+
+  // Nov 1, 2026 = Sunday = index 6 in Mon-Sun grid
+  const startOffset = 6;
+  for (let blank = 0; blank < startOffset; blank++) {
+    const e = document.createElement('div');
+    e.className = 'cal-day empty';
+    grid.appendChild(e);
+  }
+
+  for (let day = 1; day <= 30; day++) {
+    const cell = document.createElement('div');
+    const isWeekend  = WEEKEND_DAYS.has(day);
+    const isPast     = PAST_DAYS.has(day);
+    const isBlocked  = BLOCKED_DAYS.has(day) && blockedDismissed.has(day);
+    const isSelected = calSelectedDays.has(day);
+
+    if (isPast || isBlocked) {
+      cell.className = 'cal-day blocked';
+      cell.textContent = day;
+    } else if (isWeekend) {
+      cell.className = 'cal-day available' + (isSelected ? ' selected' : '');
+      cell.textContent = day;
+      cell.addEventListener('click', () => onDayClick(day));
+    } else {
+      cell.className = 'cal-day weekday';
+      cell.textContent = day;
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function onDayClick(day) {
+  if (BLOCKED_DAYS.has(day) && !blockedDismissed.has(day)) {
+    triggerVannacci(
+      'MI DISPIACE, HO DA FARE, SCEGLI UN ALTRO GIORNO TRIMONCELLA',
+      () => {
+        blockedDismissed.add(day);
+        calSelectedDays.delete(day);
+        updateCalendarUI();
+        buildCalendar();
+        startCalendarIdleTimer();
+      }
+    );
+    return;
+  }
+
+  // Toggle selezione multipla
+  if (calSelectedDays.has(day)) {
+    calSelectedDays.delete(day);
+  } else {
+    calSelectedDays.add(day);
+  }
+
+  // Ferma il timer non appena almeno un giorno è scelto
+  if (calSelectedDays.size > 0) clearCalendarIdleTimer();
+  else startCalendarIdleTimer();
+
+  updateCalendarUI();
+}
+
+function updateCalendarUI() {
+  const label = document.getElementById('cal-selected-label');
+  const btn   = document.getElementById('cal-confirm-btn');
+  const dayNames = ['','1 Nov','2 Nov','3 Nov','4 Nov','5 Nov',
+    '6 Nov','7 Nov','8 Nov','9 Nov','10 Nov',
+    '11 Nov','12 Nov','13 Nov','14 Nov','15 Nov',
+    '16 Nov','17 Nov','18 Nov','19 Nov','20 Nov',
+    '21 Nov','22 Nov','23 Nov','24 Nov','25 Nov',
+    '26 Nov','27 Nov','28 Nov','29 Nov','30 Nov'];
+
+  if (calSelectedDays.size > 0) {
+    const sorted = [...calSelectedDays].sort((a,b) => a-b);
+    const names  = sorted.map(d => '<span>' + dayNames[d] + '</span>').join(', ');
+    label.innerHTML = 'Hai scelto: ' + names;
+    btn.classList.add('ready');
+  } else {
+    label.innerHTML = 'Nessun giorno selezionato';
+    btn.classList.remove('ready');
+  }
+
+  buildCalendar();
+}
+
+async function confirmCalendar() {
+  if (calSelectedDays.size === 0) return;
+  clearCalendarIdleTimer();
+
+  const days = [...calSelectedDays].sort((a, b) => a - b);
+  await sbClient.from('Votes').insert({ name: currentUser, days });
+
+  const pb = document.getElementById('pianobar-audio');
+  pb.pause();
+  pb.currentTime = 0;
+  const napule = document.getElementById('napule-audio');
+  napule.volume = 0.2;
+  napule.play().catch(() => {});
+
+  goTo('final');
+}
+
+</script>
+</body>
+</html>
