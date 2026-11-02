@@ -672,7 +672,7 @@
     <div class="tap-here-text">TAP HERE</div>
   </div>
   <div class="intro-logo" id="introLogo">aaN</div>
-  <div class="intro-subtitle" id="introSubtitle">✨ Andiamo a Napoli girlZ ✨</div>
+  <div class="intro-subtitle" id="introSubtitle">andiamo a Napoli girlZ✨</div>
 </div>
 
 <!-- ══════════════════════ PROFILES ══════════════════════ -->
@@ -889,7 +889,13 @@ window.addEventListener('load', () => {
     // Fade out the tap overlay
     document.getElementById('intro-tap-overlay').classList.add('hidden');
 
-    // Play audio — guaranteed inside a user gesture event
+    // Unlock all audio elements on first user gesture (required on iOS)
+    ['pianobar-audio', 'napule-audio', 'vannacci-audio'].forEach(id => {
+      const el = document.getElementById(id);
+      el.play().then(() => el.pause()).catch(() => {});
+    });
+
+    // Play Netflix audio
     const netflixAudio = document.getElementById('netflix-audio');
     netflixAudio.play().catch(() => {});
     netflixAudio.addEventListener('ended', () => {
