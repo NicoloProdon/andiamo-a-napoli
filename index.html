@@ -63,20 +63,21 @@
   .slot-cabinet {
     display:flex; flex-direction:column; align-items:center;
     background:linear-gradient(to bottom,#222,#111);
-    border:3px solid #555;
-    border-radius:12px;
-    padding:clamp(14px,4vw,24px) clamp(20px,6vw,36px);
-    box-shadow:0 0 24px rgba(255,215,0,0.15), inset 0 2px 4px rgba(255,255,255,0.05);
-    gap:clamp(12px,3vh,20px);
+    border:3px solid #666;
+    border-radius:14px;
+    padding:clamp(16px,5vw,28px) clamp(24px,8vw,48px);
+    box-shadow:0 0 28px rgba(255,215,0,0.2), inset 0 2px 4px rgba(255,255,255,0.05);
+    gap:clamp(14px,4vh,24px);
     cursor:pointer;
+    min-width:clamp(140px,40vw,220px);
   }
   /* Coin slot opening */
   .coin-slot-opening {
-    width:clamp(48px,14vw,80px); height:clamp(8px,2vw,12px);
+    width:clamp(56px,16vw,90px); height:clamp(9px,2.5vw,14px);
     background:#000;
-    border:2px solid #888;
-    border-radius:3px;
-    box-shadow:inset 0 2px 6px rgba(0,0,0,0.8);
+    border:2px solid #999;
+    border-radius:4px;
+    box-shadow:inset 0 3px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(255,255,255,0.1);
   }
   /* Lever */
   .lever-wrap {
@@ -847,7 +848,7 @@
 <div id="screen-final" class="screen">
   <img class="final-photo" src="images/img.png" alt="">
   <p class="final-text" id="final-text">Grazie, ora puoi andare a fanculo, con affetto</p>
-  <p class="final-subtext" id="final-subtext">A presto a Napoli 🍕<br>La spesa per autostrada, carburante e sosta auto ammonta a circa 25/30€ a testa!! </p>
+  <p class="final-subtext" id="final-subtext">A presto a Napoli 🍕<br><br>Per autostrada, carburante e sosta auto la quota è circa 25/30€ a testa!! </p>
 </div>
 
 <!-- ══════════════════════ SUCCESS ══════════════════════ -->
@@ -960,25 +961,25 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ─── COIN SOUND ───────────────────────────────────────────────────────────────
-const _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let _audioCtx = null;
 
 function playCoinSound() {
-  const schedule = () => {
-    const t = _audioCtx.currentTime;
-    [[800, 0], [1100, 0.11]].forEach(([freq, delay]) => {
-      const osc  = _audioCtx.createOscillator();
-      const gain = _audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(_audioCtx.destination);
-      osc.type = 'square';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.12, t + delay);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.12);
-      osc.start(t + delay);
-      osc.stop(t + delay + 0.12);
-    });
-  };
-  _audioCtx.resume().then(schedule).catch(schedule);
+  // Crea l'AudioContext dentro il gesto utente (richiesto da iOS)
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const ctx = _audioCtx;
+  const t = ctx.currentTime;
+  [[800, 0], [1100, 0.11]].forEach(([freq, delay]) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.12, t + delay);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.12);
+    osc.start(t + delay);
+    osc.stop(t + delay + 0.12);
+  });
 }
 
 // ─── INTRO ────────────────────────────────────────────────────────────────────
