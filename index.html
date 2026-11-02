@@ -1079,21 +1079,59 @@ window.addEventListener('load', () => {
     setTimeout(() => goTo('profiles'), 4200);
   }
 
+  function playTick() {
+    if (!_audioCtx) return;
+    const t = _audioCtx.currentTime;
+    const buf = _audioCtx.createBuffer(1, _audioCtx.sampleRate * 0.03, _audioCtx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let j = 0; j < data.length; j++) data[j] = (Math.random() * 2 - 1) * (1 - j / data.length);
+    const src = _audioCtx.createBufferSource();
+    const gain = _audioCtx.createGain();
+    const filt = _audioCtx.createBiquadFilter();
+    filt.type = 'bandpass'; filt.frequency.value = 1800; filt.Q.value = 1.5;
+    src.buffer = buf;
+    src.connect(filt); filt.connect(gain); gain.connect(_audioCtx.destination);
+    gain.gain.setValueAtTime(0.25, t);
+    src.start(t);
+  }
+
+  function playWinSound() {
+    if (!_audioCtx) return;
+    [523, 659, 784, 1047, 1319].forEach((freq, i) => {
+      const t = _audioCtx.currentTime + i * 0.11;
+      const osc  = _audioCtx.createOscillator();
+      const gain = _audioCtx.createGain();
+      osc.connect(gain); gain.connect(_audioCtx.destination);
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.13, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.start(t); osc.stop(t + 0.18);
+    });
+  }
+
   function spinReels(onDone) {
     const syms = ['7','BAR','★','♥','♦','♣','@'];
     const stopAt = [1300, 2100, 2900];
     stopAt.forEach((ms, i) => {
       const el = document.getElementById('sym-' + i);
+      let tickCount = 0;
       const iv = setInterval(() => {
         el.textContent = syms[Math.floor(Math.random() * syms.length)];
         el.classList.remove('seven');
+        if (tickCount % 2 === 0) playTick();
+        tickCount++;
       }, 70);
       setTimeout(() => {
         clearInterval(iv);
         el.textContent = '7';
         el.classList.add('seven');
         el.closest('.slot-reel-window').classList.add('winning');
-        if (i === 2) setTimeout(onDone, 900);
+        playTick();
+        if (i === 2) {
+          playWinSound();
+          setTimeout(onDone, 900);
+        }
       }, ms);
     });
   }
