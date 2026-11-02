@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Andiamo a Napoli</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:100%; height:100%; overflow:hidden; background:#000; font-family:'Georgia', serif; font-size:18px; }
@@ -849,10 +848,6 @@ let idleTimer = null;
 function gotoUnlock(who) {
   clearPinBoxes(who);
   goTo(who + '-unlock');
-  setTimeout(() => {
-    const first = document.getElementById(who === 'nadeska' ? 'n0' : 'f0');
-    if (first) first.focus();
-  }, 500);
   startIdleTimer(who);
 }
 
@@ -877,6 +872,25 @@ function clearIdleTimer(who) {
 function resetIdleTimer(who) {
   if (idleTimer) startIdleTimer(who);
 }
+
+// ─── VISIBILITY: pausa/riprendi audio ─────────────────────────────────────────
+const managedAudioIds = ['netflix-audio', 'pianobar-audio', 'napule-audio', 'vannacci-audio'];
+let audioStateBeforeHide = {};
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    managedAudioIds.forEach(id => {
+      const el = document.getElementById(id);
+      audioStateBeforeHide[id] = !el.paused;
+      if (!el.paused) el.pause();
+    });
+  } else {
+    managedAudioIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (audioStateBeforeHide[id]) el.play().catch(() => {});
+    });
+  }
+});
 
 // ─── INTRO ────────────────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
@@ -984,14 +998,19 @@ function successBoxes(prefix, count) {
 }
 
 // ─── SUPABASE ─────────────────────────────────────────────────────────────────
-const sbClient = supabase.createClient(
-  'https://ajpeqxkgmrshuzcmmznj.supabase.co',
-  'sb_publishable_HHaVgJRLq1xIP7ZLTMAsaw_nVriZi6a'
-);
+let sbClient = null;
+function getSbClient() {
+  if (!sbClient) sbClient = supabase.createClient(
+    'https://ajpeqxkgmrshuzcmmznj.supabase.co',
+    'sb_publishable_HHaVgJRLq1xIP7ZLTMAsaw_nVriZi6a'
+  );
+  return sbClient;
+}
 
 let currentUser = null;
 let vannacciActive = false;
 let vannacciDismissCallback = null;
+let vannacciCount = 0;
 let vannacciCanDismiss = false;
 
 function checkPin(who) {
@@ -1088,6 +1107,7 @@ let vannacciAnim = null;
 function triggerVannacci(customMsg, onDismiss) {
   if (vannacciActive) return;
   vannacciActive = true;
+  vannacciCount++;
   vannacciCanDismiss = false;
   setTimeout(() => { vannacciCanDismiss = true; }, 2000);
   vannacciDismissCallback = onDismiss || null;
@@ -1276,8 +1296,16 @@ async function confirmCalendar() {
   if (calSelectedDays.size === 0) return;
   clearCalendarIdleTimer();
 
+  if (vannacciCount === 0) {
+    triggerVannacci(null, () => doConfirm());
+    return;
+  }
+  await doConfirm();
+}
+
+async function doConfirm() {
   const days = [...calSelectedDays].sort((a, b) => a - b);
-  await sbClient.from('Votes').insert({ name: currentUser, days });
+  await getSbClient().from('Votes').insert({ name: currentUser, days });
 
   const pb = document.getElementById('pianobar-audio');
   pb.pause();
@@ -1290,5 +1318,6 @@ async function confirmCalendar() {
 }
 
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </body>
 </html>
