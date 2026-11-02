@@ -16,48 +16,75 @@
   }
   .screen.active { opacity:1; pointer-events:all; }
 
-  /* ─── INTRO ─── */
-  #screen-intro { background:#000; cursor:pointer; }
+  /* ─── LOADER ─── */
+  #screen-loader {
+    background:#e50914; z-index:100; flex-direction:column; gap:32px;
+  }
+  .loader-logo {
+    font-size:clamp(60px,15vw,120px); font-weight:900; color:#fff;
+    font-family:'Georgia',serif; letter-spacing:-2px;
+  }
+  .loader-bar-wrap {
+    width:clamp(140px,40vw,280px); height:4px;
+    background:rgba(255,255,255,0.3); border-radius:2px; overflow:hidden;
+  }
+  .loader-bar-fill {
+    height:100%; background:#fff; border-radius:2px; width:0%;
+    animation:loaderFill 3s cubic-bezier(0.4,0,0.8,1) forwards;
+  }
+  @keyframes loaderFill { to { width:100%; } }
 
-  /* Pre-tap overlay */
+  /* ─── INTRO ─── */
+  #screen-intro { background:#000; }
+
+  /* Coin slot overlay */
   #intro-tap-overlay {
     display:flex; flex-direction:column;
     align-items:center; justify-content:center;
-    gap: clamp(12px,3vh,20px);
-    transition: opacity 0.4s ease;
+    gap:clamp(16px,4vh,28px);
+    transition:opacity 0.4s ease;
   }
   #intro-tap-overlay.hidden { opacity:0; pointer-events:none; }
-  .tap-finger {
-    font-size: clamp(80px,22vw,140px);
-    line-height:1;
-    animation: fingerBounce 1s ease-in-out infinite;
-    transform-origin: bottom center;
-    filter: drop-shadow(0 8px 30px rgba(255,255,255,0.15));
+  .coin-insert-text {
+    font-size:clamp(28px,8vw,52px); font-weight:900; color:#fff;
+    letter-spacing:clamp(4px,2vw,10px); text-transform:uppercase;
+    font-family:'Georgia',serif;
+    animation:coinBlink 0.75s step-start infinite;
   }
-  @keyframes fingerBounce {
-    0%,100% { transform: translateY(0) rotate(-10deg); }
-    50%     { transform: translateY(-18px) rotate(5deg); }
+  @keyframes coinBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .lever-wrap {
+    display:flex; flex-direction:column; align-items:center;
+    cursor:pointer; position:relative;
   }
-  .tap-here-text {
-    font-size: clamp(36px,11vw,72px);
-    font-weight:900;
-    color:#fff;
-    letter-spacing: clamp(6px,2vw,14px);
-    text-transform:uppercase;
-    font-family:'Georgia', serif;
-    animation: tapPulse 1s ease-in-out infinite;
+  .lever-inner {
+    display:flex; flex-direction:column; align-items:center;
+    transform-origin:bottom center;
   }
-  @keyframes tapPulse {
-    0%,100% { opacity:1; transform:scale(1); }
-    50%     { opacity:0.7; transform:scale(0.96); }
+  .lever-inner.pulled {
+    animation:leverPull 0.45s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
   }
-  .tap-tagline {
-    font-size: clamp(15px,4vw,22px);
-    color:#666;
-    letter-spacing: clamp(3px,1.5vw,7px);
-    text-transform:uppercase;
-    text-align:center;
-    padding:0 20px;
+  @keyframes leverPull {
+    0%   { transform:rotate(0deg); }
+    55%  { transform:rotate(62deg); }
+    75%  { transform:rotate(48deg); }
+    88%  { transform:rotate(56deg); }
+    100% { transform:rotate(52deg); }
+  }
+  .lever-ball {
+    width:clamp(32px,9vw,52px); height:clamp(32px,9vw,52px);
+    background:radial-gradient(circle at 35% 35%, #ff6b6b, #b00710);
+    border-radius:50%;
+    box-shadow:0 4px 18px rgba(229,9,20,0.7), inset 0 -3px 6px rgba(0,0,0,0.3);
+  }
+  .lever-arm {
+    width:clamp(8px,2vw,12px); height:clamp(80px,22vw,130px);
+    background:linear-gradient(to right,#888,#eee,#888);
+    border-radius:4px;
+  }
+  .lever-base {
+    width:clamp(44px,12vw,70px); height:14px;
+    background:linear-gradient(to bottom,#666,#333);
+    border-radius:7px; margin-top:2px;
   }
 
   /* Post-tap: netflix logo */
@@ -437,7 +464,7 @@
   }
   #vannacci-img {
     position:absolute;
-    width: clamp(100px,20vw,160px);
+    width: clamp(160px,35vw,280px);
     height:auto;
     filter:drop-shadow(0 4px 20px rgba(0,0,0,0.8));
     cursor:pointer;
@@ -664,11 +691,23 @@
 </head>
 <body>
 
+<!-- ══════════════════════ LOADER ══════════════════════ -->
+<div id="screen-loader" class="screen active">
+  <div class="loader-logo">aaN</div>
+  <div class="loader-bar-wrap"><div class="loader-bar-fill"></div></div>
+</div>
+
 <!-- ══════════════════════ INTRO ══════════════════════ -->
-<div id="screen-intro" class="screen active">
+<div id="screen-intro" class="screen">
   <div id="intro-tap-overlay">
-    <div class="tap-finger">👆</div>
-    <div class="tap-here-text">TAP HERE</div>
+    <div class="coin-insert-text">INSERT COIN</div>
+    <div class="lever-wrap" id="lever-wrap">
+      <div class="lever-inner" id="lever-inner">
+        <div class="lever-ball"></div>
+        <div class="lever-arm"></div>
+      </div>
+      <div class="lever-base"></div>
+    </div>
   </div>
   <div class="intro-logo" id="introLogo">aaN</div>
   <div class="intro-subtitle" id="introSubtitle">andiamo a Napoli girlZ✨</div>
@@ -814,6 +853,7 @@
 <audio id="netflix-audio" src="audio/Netflix New Logo Animation 2019.mp3" preload="auto"></audio>
 <audio id="pianobar-audio" src="audio/Piano Bar-compressed.mp3" preload="auto" loop></audio>
 <audio id="napule-audio" src="audio/Napule.mp3" preload="auto"></audio>
+<audio id="vivimi-audio" src="audio/Vivimi.mp3" preload="auto" loop></audio>
 
 <script>
 // ─── SCREEN MANAGEMENT ───────────────────────────────────────────────────────
@@ -874,7 +914,17 @@ function resetIdleTimer(who) {
 }
 
 // ─── VISIBILITY: pausa/riprendi audio ─────────────────────────────────────────
-const managedAudioIds = ['netflix-audio', 'pianobar-audio', 'napule-audio', 'vannacci-audio'];
+const managedAudioIds = ['netflix-audio', 'pianobar-audio', 'vivimi-audio', 'napule-audio', 'vannacci-audio'];
+let currentBgAudioId = 'pianobar-audio';
+
+function switchToBgAudio(newId, volume = 0.2) {
+  const prev = document.getElementById(currentBgAudioId);
+  prev.pause(); prev.currentTime = 0;
+  currentBgAudioId = newId;
+  const next = document.getElementById(newId);
+  next.volume = volume;
+  next.play().catch(() => {});
+}
 let audioStateBeforeHide = {};
 
 document.addEventListener('visibilitychange', () => {
@@ -892,15 +942,42 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+// ─── COIN SOUND ───────────────────────────────────────────────────────────────
+function playCoinSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const t = ctx.currentTime;
+  [[800, 0], [1100, 0.11]].forEach(([freq, delay]) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.12, t + delay);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.12);
+    osc.start(t + delay);
+    osc.stop(t + delay + 0.12);
+  });
+}
+
 // ─── INTRO ────────────────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
+  // Preload images in background
+  ['images/nadeska.jpeg','images/franceska.jpeg','images/vannacci.png']
+    .forEach(src => { const img = new Image(); img.src = src; });
+
+  // Show intro after 3s loader
+  setTimeout(() => {
+    goTo('intro');
+  }, 3000);
+
   let introStarted = false;
 
   function startIntro() {
     if (introStarted) return;
     introStarted = true;
 
-    // Fade out the tap overlay
+    // Fade out the coin overlay
     document.getElementById('intro-tap-overlay').classList.add('hidden');
 
     // Unlock all audio elements on first user gesture (required on iOS)
@@ -913,9 +990,7 @@ window.addEventListener('load', () => {
     const netflixAudio = document.getElementById('netflix-audio');
     netflixAudio.play().catch(() => {});
     netflixAudio.addEventListener('ended', () => {
-      const pb = document.getElementById('pianobar-audio');
-      pb.volume = 0.2;
-      pb.play().catch(() => {});
+      switchToBgAudio('pianobar-audio', 0.2);
     }, { once: true });
 
     // Trigger logo + subtitle animations
@@ -926,8 +1001,17 @@ window.addEventListener('load', () => {
     setTimeout(() => goTo('profiles'), 4200);
   }
 
-  document.getElementById('screen-intro').addEventListener('touchstart', startIntro, { once: true });
-  document.getElementById('screen-intro').addEventListener('click',      startIntro, { once: true });
+  function onLeverClick() {
+    const inner = document.getElementById('lever-inner');
+    if (inner.classList.contains('pulled')) return;
+    playCoinSound();
+    inner.classList.add('pulled');
+    setTimeout(startIntro, 500);
+  }
+
+  const leverWrap = document.getElementById('lever-wrap');
+  leverWrap.addEventListener('touchstart', onLeverClick, { once: true });
+  leverWrap.addEventListener('click',      onLeverClick, { once: true });
 });
 
 // ─── PIN BOXES LOGIC ─────────────────────────────────────────────────────────
@@ -1020,6 +1104,7 @@ function checkPin(who) {
       clearIdleTimer('nadeska');
       successBoxes('n', 4);
       currentUser = 'nadeska';
+      switchToBgAudio('vivimi-audio');
       setTimeout(() => goTo('nadeska-welcome'), 600);
     } else {
       startIdleTimer('nadeska');
@@ -1032,6 +1117,7 @@ function checkPin(who) {
       clearIdleTimer('franceska');
       successBoxes('f', 4);
       currentUser = 'franceska';
+      switchToBgAudio('vivimi-audio');
       document.getElementById('sherlock-lock').textContent = '🔓';
       document.getElementById('sherlock-lock').classList.add('unlocked');
       setTimeout(() => goTo('franceska-welcome'), 700);
@@ -1112,7 +1198,7 @@ function triggerVannacci(customMsg, onDismiss) {
   setTimeout(() => { vannacciCanDismiss = true; }, 2000);
   vannacciDismissCallback = onDismiss || null;
 
-  document.getElementById('pianobar-audio').volume = 0.05;
+  document.getElementById(currentBgAudioId).volume = 0.05;
 
   const overlay = document.getElementById('vannacci-overlay');
   const img     = document.getElementById('vannacci-img');
@@ -1166,7 +1252,7 @@ function dismissVannacci() {
   document.getElementById('vannacci-overlay').style.display = 'none';
   document.getElementById('vannacci-msg').style.display = 'none';
   vannacciActive = false;
-  document.getElementById('pianobar-audio').volume = 0.2;
+  document.getElementById(currentBgAudioId).volume = 0.2;
   if (vannacciDismissCallback) { vannacciDismissCallback(); vannacciDismissCallback = null; }
   // Restart idle timer on the active screen
   if (currentScreen === 'nadeska-unlock') startIdleTimer('nadeska');
@@ -1307,12 +1393,7 @@ async function doConfirm() {
   const days = [...calSelectedDays].sort((a, b) => a - b);
   await getSbClient().from('Votes').insert({ name: currentUser, days });
 
-  const pb = document.getElementById('pianobar-audio');
-  pb.pause();
-  pb.currentTime = 0;
-  const napule = document.getElementById('napule-audio');
-  napule.volume = 0.3;
-  napule.play().catch(() => {});
+  switchToBgAudio('napule-audio', 0.3);
 
   goTo('final');
 }
