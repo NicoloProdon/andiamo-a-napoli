@@ -712,19 +712,62 @@
     color:#fff;
     line-height:1.4;
     max-width:520px;
+    text-align:center;
+    padding:0 16px;
     opacity:0;
-    transform:translateY(20px);
-    animation:riseIn 0.7s ease 0.5s forwards;
   }
   .final-subtext {
     font-size:clamp(18px,5vw,26px);
     color:#f0f0f0;
     font-style:italic;
+    text-align:center;
+    padding:0 16px;
     opacity:0;
-    animation:riseIn 0.7s ease 1.1s forwards;
   }
   @keyframes riseIn {
     to { opacity:1; transform:translateY(0); }
+  }
+  @keyframes fadeInChar {
+    from { opacity:0; transform:translateY(6px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ─── SCRATCH CARD ─── */
+  #screen-scratch {
+    background: radial-gradient(ellipse at center, #1a0505 0%, #000 70%);
+  }
+  .scratch-container {
+    display:flex; flex-direction:column; align-items:center;
+    gap:clamp(18px,5vw,28px);
+  }
+  .scratch-hint {
+    color:#aaa; font-size:clamp(15px,4vw,19px);
+    letter-spacing:2px; font-style:italic;
+  }
+  .scratch-card-wrap {
+    position:relative;
+    width:clamp(260px,80vw,380px); height:clamp(130px,42vw,190px);
+    border-radius:14px; overflow:hidden;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7), 0 0 0 2px rgba(255,215,0,0.3);
+  }
+  .scratch-reveal {
+    position:absolute; inset:0;
+    background:linear-gradient(135deg, #1a0000 0%, #3a0000 50%, #1a0000 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px;
+  }
+  .scratch-reveal-text {
+    font-size:clamp(20px,6.5vw,34px); font-weight:bold; color:#ffd700;
+    text-align:center; letter-spacing:3px;
+    text-shadow:0 0 20px rgba(255,215,0,0.7), 0 0 40px rgba(255,215,0,0.3);
+  }
+  .scratch-reveal-sub {
+    font-size:clamp(13px,3.5vw,17px); color:rgba(255,215,0,0.6);
+    letter-spacing:1px;
+  }
+  #scratch-canvas {
+    position:absolute; inset:0; width:100%; height:100%;
+    cursor:crosshair; touch-action:none; border-radius:14px;
   }
 
   /* ─── VANNACCI MESSAGE ─── */
@@ -866,7 +909,7 @@
       Ma in fondo... portare speranza è il dono piu' raro.
       E tu lo fai senza nemmeno accorgertene. Ti amo <3 ✨
     </p>
-    <button class="welcome-continue-btn" onclick="goTo('calendar')">Avanti →</button>
+    <button class="welcome-continue-btn" onclick="goTo('scratch')">Avanti →</button>
   </div>
 </div>
 
@@ -887,7 +930,21 @@
       E tu sei la prova vivente che non serve un nome esotico
       per essere del tutto unica. 🌟
     </p>
-    <button class="welcome-continue-btn" onclick="goTo('calendar')">Avanti →</button>
+    <button class="welcome-continue-btn" onclick="goTo('scratch')">Avanti →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ SCRATCH CARD ══════════════════════ -->
+<div id="screen-scratch" class="screen">
+  <div class="scratch-container">
+    <p class="scratch-hint">Gratta qui per scoprire il premio...</p>
+    <div class="scratch-card-wrap">
+      <div class="scratch-reveal">
+        <p class="scratch-reveal-text">SCEGLI LA DATA</p>
+        <p class="scratch-reveal-sub">Novembre 2026 🗺️</p>
+      </div>
+      <canvas id="scratch-canvas"></canvas>
+    </div>
   </div>
 </div>
 
@@ -946,7 +1003,7 @@ const screens = [
   'loader','intro','profiles',
   'nadeska-unlock','franceska-unlock',
   'nadeska-welcome','franceska-welcome',
-  'success'
+  'scratch','success'
 ];
 let currentScreen = 'loader';
 
@@ -958,12 +1015,18 @@ function goTo(name) {
   setTimeout(() => {
     next.classList.add('active');
     currentScreen = name;
+    if (name === 'scratch') {
+      initScratchCard();
+    }
     if (name === 'calendar') {
       calSelectedDays  = new Set();
       blockedDismissed = new Set();
       buildCalendar();
       updateCalendarUI();
       startCalendarIdleTimer();
+    }
+    if (name === 'final') {
+      animateFinalText();
     }
   }, 300);
 }
@@ -1594,6 +1657,88 @@ async function doConfirm() {
   document.getElementById('wa-photo-btn').href = waUrl;
 
   goTo('final');
+}
+
+// ─── SCRATCH CARD ────────────────────────────────────────────────────────────
+function initScratchCard() {
+  const canvas = document.getElementById('scratch-canvas');
+  const ctx = canvas.getContext('2d');
+  const wrap = canvas.parentElement;
+
+  // Match canvas resolution to display size
+  canvas.width  = wrap.offsetWidth;
+  canvas.height = wrap.offsetHeight;
+
+  // Silver scratch surface
+  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  grad.addColorStop(0,   '#b0b0b0');
+  grad.addColorStop(0.4, '#d8d8d8');
+  grad.addColorStop(0.7, '#c0c0c0');
+  grad.addColorStop(1,   '#a0a0a0');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Repeating pattern text on top
+  ctx.fillStyle = 'rgba(80,80,80,0.25)';
+  ctx.font = 'bold 11px monospace';
+  for (let y = 18; y < canvas.height + 14; y += 18) {
+    for (let x = -10; x < canvas.width; x += 72) {
+      ctx.fillText('✦ GRATTA ✦', x, y);
+    }
+  }
+
+  let scratching = false;
+  let scratchedArea = 0;
+  const total = canvas.width * canvas.height;
+  let advanced = false;
+
+  function scratchAt(x, y) {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(x, y, 26, 0, Math.PI * 2);
+    ctx.fill();
+    scratchedArea += Math.PI * 26 * 26;
+    if (!advanced && scratchedArea / total > 0.45) {
+      advanced = true;
+      canvas.style.pointerEvents = 'none';
+      setTimeout(() => goTo('calendar'), 500);
+    }
+  }
+
+  function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return [src.clientX - r.left, src.clientY - r.top];
+  }
+
+  canvas.addEventListener('mousedown',  e => { scratching = true; scratchAt(...pos(e)); });
+  canvas.addEventListener('mousemove',  e => { if (scratching) scratchAt(...pos(e)); });
+  canvas.addEventListener('mouseup',    () => { scratching = false; });
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); scratching = true;  scratchAt(...pos(e)); }, {passive:false});
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (scratching) scratchAt(...pos(e)); },   {passive:false});
+  canvas.addEventListener('touchend',   () => { scratching = false; });
+}
+
+// ─── FINAL TEXT: HANDWRITING ANIMATION ───────────────────────────────────────
+function animateFinalText() {
+  const el  = document.getElementById('final-text');
+  const sub = document.getElementById('final-subtext');
+  const text = el.textContent.trim();
+
+  el.innerHTML = '';
+  el.style.cssText = 'opacity:1;';
+
+  [...text].forEach((char, i) => {
+    const span = document.createElement('span');
+    span.textContent = char === ' ' ? '\u00a0' : char;
+    span.style.cssText = `display:inline-block; opacity:0;
+      animation:fadeInChar 0.07s ease ${0.4 + i * 0.045}s forwards;`;
+    el.appendChild(span);
+  });
+
+  const delay = 0.4 + text.length * 0.045 + 0.5;
+  sub.style.cssText = `opacity:0; transform:translateY(10px);
+    animation:riseIn 0.8s ease ${delay}s forwards;`;
 }
 
 </script>

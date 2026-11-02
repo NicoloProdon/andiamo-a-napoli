@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Risultati — Andiamo a Napoli</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    background:#0d0d0d; color:#f0f0f0;
+    font-family:'Georgia', serif; min-height:100vh;
+    padding:32px 20px 60px;
+  }
+
+  h1 {
+    text-align:center; font-size:clamp(22px,5vw,34px);
+    color:#e50914; letter-spacing:3px; text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .subtitle {
+    text-align:center; color:#888; font-size:14px;
+    letter-spacing:2px; text-transform:uppercase;
+    margin-bottom:40px;
+  }
+
+  /* ─── STATS HEADER ─── */
+  .stats-row {
+    display:flex; gap:16px; justify-content:center; flex-wrap:wrap;
+    margin-bottom:40px;
+  }
+  .stat-card {
+    background:#1a1a1a; border:1px solid #333; border-radius:10px;
+    padding:18px 28px; text-align:center; min-width:130px;
+  }
+  .stat-num {
+    font-size:clamp(28px,6vw,40px); font-weight:bold; color:#e50914;
+    display:block;
+  }
+  .stat-label { font-size:12px; color:#888; letter-spacing:1px; text-transform:uppercase; margin-top:4px; }
+
+  /* ─── CHART ─── */
+  .chart-title {
+    text-align:center; font-size:clamp(15px,3vw,18px); color:#aaa;
+    letter-spacing:2px; text-transform:uppercase; margin-bottom:24px;
+  }
+  .chart-wrap {
+    max-width:820px; margin:0 auto 48px;
+    background:#111; border:1px solid #222; border-radius:14px;
+    padding:32px 24px 16px;
+    overflow-x:auto;
+  }
+  .chart-inner {
+    display:flex; align-items:flex-end; gap:clamp(4px,1.5vw,10px);
+    height:220px; min-width:520px; position:relative;
+  }
+  /* Y axis baseline */
+  .chart-inner::before {
+    content:''; position:absolute; bottom:32px; left:0; right:0;
+    height:1px; background:rgba(255,255,255,0.08);
+  }
+  .bar-col {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:flex-end; height:100%;
+    gap:4px;
+  }
+  .bar-count {
+    font-size:clamp(9px,1.8vw,12px); color:#aaa; font-weight:bold;
+    min-height:16px;
+  }
+  .bar-candle {
+    width:100%; max-width:28px;
+    border-radius:3px 3px 0 0;
+    transition:background 0.2s;
+    position:relative;
+    cursor:default;
+  }
+  .bar-candle.zero { background:rgba(255,255,255,0.06); height:4px !important; border-radius:3px; }
+  .bar-candle.low  { background:linear-gradient(to top, #e50914, #ff4444); }
+  .bar-candle.mid  { background:linear-gradient(to top, #ff8800, #ffcc00); }
+  .bar-candle.high { background:linear-gradient(to top, #22cc44, #88ffaa); }
+  /* candle wick */
+  .bar-candle::before {
+    content:''; position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+    width:2px; height:6px;
+    background:inherit; opacity:0.5; border-radius:1px;
+  }
+  .bar-candle.zero::before { display:none; }
+  .bar-day {
+    font-size:clamp(9px,1.8vw,11px); color:#666;
+    margin-top:4px; white-space:nowrap;
+  }
+  .bar-day.weekend { color:#e50914; }
+
+  /* ─── VOTES TABLE ─── */
+  .table-title {
+    text-align:center; font-size:clamp(15px,3vw,18px); color:#aaa;
+    letter-spacing:2px; text-transform:uppercase; margin-bottom:20px;
+  }
+  .votes-table-wrap {
+    max-width:620px; margin:0 auto 32px;
+    overflow-x:auto;
+  }
+  table {
+    width:100%; border-collapse:collapse; font-size:clamp(13px,2.5vw,15px);
+  }
+  thead th {
+    padding:10px 16px; text-align:left;
+    border-bottom:1px solid #333; color:#888;
+    letter-spacing:1px; text-transform:uppercase; font-size:11px;
+  }
+  tbody tr { border-bottom:1px solid #1e1e1e; }
+  tbody tr:hover { background:#151515; }
+  tbody td { padding:10px 16px; color:#ccc; }
+  tbody td.name-cell { color:#fff; font-weight:bold; }
+  .day-pill {
+    display:inline-block; background:#1e0000; border:1px solid #550000;
+    color:#ff6666; border-radius:4px; padding:2px 7px;
+    font-size:11px; margin:2px 2px;
+  }
+  .day-pill.weekend { border-color:#e50914; color:#e50914; background:#1a0000; }
+
+  /* ─── LOADING / ERROR ─── */
+  #status {
+    text-align:center; padding:60px 20px;
+    color:#555; font-size:18px; letter-spacing:2px;
+  }
+  .error { color:#e50914; }
+</style>
+</head>
+<body>
+
+<h1>Andiamo a Napoli</h1>
+<p class="subtitle">Risultati votazione</p>
+
+<div id="status">Caricamento...</div>
+
+<div id="content" style="display:none">
+  <div class="stats-row" id="stats-row"></div>
+
+  <p class="chart-title">Preferenze per giorno — Novembre 2026</p>
+  <div class="chart-wrap">
+    <div class="chart-inner" id="chart"></div>
+  </div>
+
+  <p class="table-title">Voti per persona</p>
+  <div class="votes-table-wrap">
+    <table>
+      <thead>
+        <tr><th>Nome</th><th>Giorni scelti</th></tr>
+      </thead>
+      <tbody id="votes-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB_URL = 'https://ajpeqxkgmrshuzcmmznj.supabase.co';
+const SB_KEY = 'sb_publishable_HHaVgJRLq1xIP7ZLTMAsaw_nVriZi6a';
+
+// November 2026: weekends (Sat/Sun)
+const WEEKENDS = new Set([7,8,14,15,21,22,28,29]);
+
+async function load() {
+  const client = supabase.createClient(SB_URL, SB_KEY);
+  const { data, error } = await client
+    .from('Votes')
+    .select('name, days')
+    .order('id', { ascending: true });
+
+  const status = document.getElementById('status');
+
+  if (error) {
+    status.innerHTML = '<span class="error">Errore nel caricamento: ' + error.message + '</span>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    status.textContent = 'Nessun voto ancora.';
+    return;
+  }
+
+  status.style.display = 'none';
+  document.getElementById('content').style.display = '';
+
+  // Count votes per day (1–30)
+  const counts = new Array(31).fill(0); // index = day number
+  data.forEach(row => {
+    const days = Array.isArray(row.days) ? row.days : [];
+    days.forEach(d => { if (d >= 1 && d <= 30) counts[d]++; });
+  });
+
+  const totalVoters   = data.length;
+  const maxVotes      = Math.max(...counts.slice(1));
+  const totalSelections = counts.reduce((a, b) => a + b, 0);
+  const topDay        = counts.indexOf(maxVotes);
+
+  // Stats
+  const dayNames = ['','1','2','3','4','5','6','7','8','9','10',
+    '11','12','13','14','15','16','17','18','19','20',
+    '21','22','23','24','25','26','27','28','29','30'];
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><span class="stat-num">${totalVoters}</span><span class="stat-label">Votanti</span></div>
+    <div class="stat-card"><span class="stat-num">${totalSelections}</span><span class="stat-label">Preferenze totali</span></div>
+    <div class="stat-card"><span class="stat-num">${maxVotes > 0 ? maxVotes : '—'}</span><span class="stat-label">Voti giorno più popolare</span></div>
+    <div class="stat-card"><span class="stat-num">${maxVotes > 0 ? dayNames[topDay] + ' Nov' : '—'}</span><span class="stat-label">Giorno top</span></div>
+  `;
+
+  // Chart — only show days 7–30 (available dates)
+  const chartDays = [7,8,14,15,21,22,28,29];
+  const chart = document.getElementById('chart');
+  chart.innerHTML = '';
+  const chartMax = Math.max(...chartDays.map(d => counts[d]), 1);
+
+  chartDays.forEach(day => {
+    const c = counts[day];
+    const pct = c / chartMax;
+    const barH = Math.max(pct * 160, c > 0 ? 6 : 0);
+    const isWknd = WEEKENDS.has(day);
+
+    let cls = 'bar-candle';
+    if (c === 0)              cls += ' zero';
+    else if (pct <= 0.4)      cls += ' low';
+    else if (pct <= 0.75)     cls += ' mid';
+    else                      cls += ' high';
+
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    col.innerHTML = `
+      <span class="bar-count">${c > 0 ? c : ''}</span>
+      <div class="${cls}" style="height:${barH}px"></div>
+      <span class="bar-day${isWknd ? ' weekend' : ''}">${day}</span>
+    `;
+    chart.appendChild(col);
+  });
+
+  // Table
+  const tbody = document.getElementById('votes-tbody');
+  data.forEach(row => {
+    const name = row.name || '?';
+    const days = Array.isArray(row.days) ? [...row.days].sort((a,b)=>a-b) : [];
+    const pillsHtml = days.map(d => {
+      const isWknd = WEEKENDS.has(d);
+      return `<span class="day-pill${isWknd ? ' weekend':''}">${d} Nov</span>`;
+    }).join('');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="name-cell">${name.charAt(0).toUpperCase()+name.slice(1)}</td><td>${pillsHtml || '<span style="color:#444">—</span>'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+load();
+</script>
+</body>
+</html>
