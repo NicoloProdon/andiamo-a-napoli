@@ -1227,34 +1227,37 @@ window.addEventListener('load', () => {
     });
   }
 
-  function spinReels(onDone) {
-    const fakeSym = ['♥','BAR','7']; // quasi ma non 777 — suspense
-    doSpin(fakeSym, [1000, 1700, 2400], () => {
-      // breve pausa poi secondo giro verso 777
-      setTimeout(() => {
-        [0,1,2].forEach(i => {
-          const w = document.getElementById('sym-'+i).closest('.slot-reel-window');
-          w.classList.remove('winning');
-        });
-        doSpin(['7','7','7'], [1100, 1800, 2500], () => {
-          playWinSound();
-          // Shake + vibra
-          const cab = document.getElementById('lever-wrap');
-          cab.classList.add('shaking');
-          cab.addEventListener('animationend', () => cab.classList.remove('shaking'), { once: true });
-          if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
-          setTimeout(onDone, 1000);
-        });
-      }, 700);
-    });
-  }
+  let slotPhase = 0; // 0 = primo giro (sbagliato), 1 = secondo giro (777)
 
   function onLeverClick() {
     const inner = document.getElementById('lever-inner');
     if (inner.classList.contains('pulled')) return;
     playCoinSound();
     inner.classList.add('pulled');
-    spinReels(() => startIntro());
+
+    if (slotPhase === 0) {
+      // Primo giro: risultato sbagliato
+      doSpin(['♥','BAR','★'], [1000, 1700, 2400], () => {
+        // Riporta la leva su dopo un po' per permettere secondo giro
+        setTimeout(() => {
+          inner.classList.remove('pulled');
+          slotPhase = 1;
+        }, 900);
+      });
+    } else {
+      // Secondo giro: 777 vincente
+      [0,1,2].forEach(i => {
+        document.getElementById('sym-'+i).closest('.slot-reel-window').classList.remove('winning');
+      });
+      doSpin(['7','7','7'], [1100, 1800, 2500], () => {
+        playWinSound();
+        const cab = document.getElementById('lever-wrap');
+        cab.classList.add('shaking');
+        cab.addEventListener('animationend', () => cab.classList.remove('shaking'), { once: true });
+        if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+        setTimeout(() => startIntro(), 1000);
+      });
+    }
   }
 
   const leverWrap = document.getElementById('lever-wrap');
