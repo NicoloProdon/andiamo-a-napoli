@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Andiamo a Napoli</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
+  * { margin:0; padding:0; box-sizing:border-box; word-break: normal; overflow-wrap: break-word; }
   html, body { width:100%; height:100%; overflow:hidden; background:#000; font-family:'Georgia', serif; font-size:18px; }
 
   /* ─── SCREENS ─── */
@@ -467,6 +467,7 @@
     color:#fff;
     line-height:1.8;
     font-style:italic;
+    width:100%; text-align:center;
   }
   .welcome-continue-btn {
     margin-top:8px;
@@ -711,7 +712,7 @@
     font-weight:bold;
     color:#fff;
     line-height:1.4;
-    max-width:520px;
+    width:100%; max-width:520px;
     text-align:center;
     padding:0 16px;
     opacity:0;
@@ -721,6 +722,7 @@
     color:#f0f0f0;
     font-style:italic;
     text-align:center;
+    width:100%;
     padding:0 16px;
     opacity:0;
   }
@@ -735,14 +737,17 @@
   /* ─── SCRATCH CARD ─── */
   #screen-scratch {
     background: radial-gradient(ellipse at center, #1a0505 0%, #000 70%);
+    padding: 0 clamp(16px,4vw,24px);
   }
   .scratch-container {
     display:flex; flex-direction:column; align-items:center;
     gap:clamp(18px,5vw,28px);
+    width: 100%;
   }
   .scratch-hint {
     color:#aaa; font-size:clamp(15px,4vw,19px);
     letter-spacing:2px; font-style:italic;
+    text-align:center; width:100%;
   }
   .scratch-card-wrap {
     position:relative;
@@ -789,6 +794,139 @@
     width:max-content;
     display:none;
     box-shadow:0 4px 16px rgba(0,0,0,0.25);
+  }
+
+  /* ─── WHEEL ─── */
+  #screen-wheel {
+    background: radial-gradient(ellipse at 50% 30%, #1a0505 0%, #000 70%);
+    padding: 0 clamp(16px,4vw,24px);
+    gap: clamp(10px,2.5vh,18px);
+    overflow-y: auto;
+    justify-content: flex-start;
+    padding-top: clamp(24px,5vh,40px);
+    padding-bottom: clamp(24px,5vh,40px);
+  }
+  .wheel-intro {
+    font-size: clamp(16px,4.5vw,22px);
+    color: #ccc; font-style: italic;
+    text-align: center; width: 100%;
+    line-height: 1.5;
+  }
+  .wheel-sub {
+    font-size: clamp(22px,6vw,32px);
+    font-weight: bold; color: #ffd700;
+    text-align: center; width: 100%;
+    letter-spacing: 3px; text-transform: uppercase;
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+  }
+  .wheel-outer-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0;
+  }
+  .wheel-pointer {
+    font-size: clamp(26px,7vw,38px);
+    color: #ffd700; line-height: 1;
+    text-shadow: 0 0 12px rgba(255,215,0,0.7);
+    margin-bottom: -6px; z-index: 2; position: relative;
+  }
+  #wheel-canvas {
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(229,9,20,0.4), 0 0 80px rgba(229,9,20,0.15);
+    display: block;
+  }
+  .wheel-spin-btn {
+    background: #e50914; color: #fff;
+    border: none; padding: clamp(14px,3.5vw,18px) clamp(40px,10vw,60px);
+    font-size: clamp(18px,4.5vw,24px);
+    border-radius: 6px; cursor: pointer;
+    letter-spacing: 3px; text-transform: uppercase;
+    transition: background 0.2s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wheel-spin-btn:hover { background: #f40612; transform: scale(1.04); }
+  .wheel-spin-btn:active { transform: scale(0.96); }
+  .wheel-spin-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+  .wheel-result {
+    font-size: clamp(18px,5vw,26px);
+    font-weight: bold; color: #ffd700;
+    text-align: center; width: 100%;
+    letter-spacing: 2px; opacity: 0;
+    transition: opacity 0.5s ease;
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+  }
+  .wheel-next-btn {
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.3);
+    color: #fff; padding: clamp(12px,3vw,16px) clamp(28px,7vw,48px);
+    font-size: clamp(16px,4vw,20px);
+    border-radius: 4px; cursor: pointer;
+    letter-spacing: 2px; text-transform: uppercase;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.5s ease, border-color 0.2s, background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wheel-next-btn.ready { opacity: 1; pointer-events: all; }
+  .wheel-next-btn:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
+
+  /* ─── EXPLOSION CANVAS ─── */
+  #explosion-canvas {
+    position:fixed; inset:0; pointer-events:none; z-index:9995; display:none;
+  }
+
+  /* ─── PRIZE CLOUD ─── */
+  #prize-cloud-overlay {
+    position:fixed; inset:0; z-index:9990;
+    background:rgba(0,0,0,0.88);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .prize-cloud {
+    background:#fff;
+    border-radius:60px;
+    padding:clamp(28px,6vw,44px) clamp(28px,7vw,52px);
+    max-width:min(90vw,480px);
+    text-align:center;
+    box-shadow:0 0 60px rgba(255,255,255,0.25), 0 20px 60px rgba(0,0,0,0.6);
+    position:relative;
+    animation:cloudPop 0.55s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+  }
+  .prize-cloud::before {
+    content:'';
+    position:absolute;
+    width:clamp(50px,14vw,90px); height:clamp(50px,14vw,90px);
+    background:#fff; border-radius:50%;
+    top:clamp(-25px,-7vw,-45px); left:18%;
+  }
+  .prize-cloud::after {
+    content:'';
+    position:absolute;
+    width:clamp(35px,10vw,65px); height:clamp(35px,10vw,65px);
+    background:#fff; border-radius:50%;
+    top:clamp(-18px,-5vw,-32px); right:20%;
+  }
+  @keyframes cloudPop {
+    0% { transform:scale(0.2) translateY(40px); opacity:0; }
+    100% { transform:scale(1) translateY(0); opacity:1; }
+  }
+  .prize-cloud-emoji { font-size:clamp(36px,9vw,56px); margin-bottom:12px; display:block; }
+  .prize-cloud-text {
+    font-size:clamp(17px,4.5vw,22px);
+    color:#111; font-weight:bold;
+    line-height:1.5; margin-bottom:clamp(16px,4vw,24px);
+    width:100%;
+  }
+  .prize-countdown-label {
+    font-size:clamp(10px,2.5vw,13px); color:#888;
+    text-transform:uppercase; letter-spacing:3px; margin-bottom:6px;
+  }
+  .prize-countdown {
+    font-size:clamp(48px,14vw,80px); font-weight:900;
+    color:#e50914; font-family:'Courier New',monospace;
+    line-height:1; display:inline-block;
+    animation:countPulse 1s ease-in-out infinite;
+  }
+  @keyframes countPulse {
+    0%,100% { transform:scale(1); }
+    50% { transform:scale(1.12); }
   }
 
   /* ─── FADE TRANSITIONS ─── */
@@ -909,7 +1047,7 @@
       Ma in fondo... portare speranza è il dono piu' raro.
       E tu lo fai senza nemmeno accorgertene. Ti amo <3 ✨
     </p>
-    <button class="welcome-continue-btn" onclick="goTo('scratch')">Avanti →</button>
+    <button class="welcome-continue-btn" onclick="goTo('calendar')">Avanti →</button>
   </div>
 </div>
 
@@ -919,9 +1057,9 @@
     <div class="welcome-avatar"><img src="images/franceska.jpeg" alt="Franceska"></div>
     <p class="welcome-name">Ciao, Franceska</p>
     <p class="welcome-irony">
-      Franceska. <em>Franceska</em>.
+      <em>Franceska</em>.
       Il nome piu' comune d'Italia, scelto probabilmente lanciando
-      una monetina dopo 5 minuti di brainstorming.
+      una monetina dopo 5 ore di brainstorming.
       "Dai, mettiamo Franceska, tanto funziona sempre."
       I tuoi genitori, dei veri pionieri della fantasia.
     </p>
@@ -930,18 +1068,18 @@
       E tu sei la prova vivente che non serve un nome esotico
       per essere del tutto unica. 🌟
     </p>
-    <button class="welcome-continue-btn" onclick="goTo('scratch')">Avanti →</button>
+    <button class="welcome-continue-btn" onclick="goTo('calendar')">Avanti →</button>
   </div>
 </div>
 
 <!-- ══════════════════════ SCRATCH CARD ══════════════════════ -->
 <div id="screen-scratch" class="screen">
   <div class="scratch-container">
-    <p class="scratch-hint">Gratta qui per scoprire il premio...</p>
+    <p class="scratch-hint">Gratta almeno l'80% per rivelare il premio...</p>
     <div class="scratch-card-wrap">
       <div class="scratch-reveal">
-        <p class="scratch-reveal-text">SCEGLI LA DATA</p>
-        <p class="scratch-reveal-sub">Novembre 2026 🗺️</p>
+        <p class="scratch-reveal-text">HAI VINTO!</p>
+        <p class="scratch-reveal-sub">Gratta per scoprire il premio 🎁</p>
       </div>
       <canvas id="scratch-canvas"></canvas>
     </div>
@@ -961,6 +1099,19 @@
   </div>
 </div>
 
+<!-- ══════════════════════ WHEEL ══════════════════════ -->
+<div id="screen-wheel" class="screen">
+  <p class="wheel-intro">Vabbè... ti concedo <em>veramente</em> un premio.</p>
+  <p class="wheel-sub">Gira la ruota!</p>
+  <div class="wheel-outer-wrap">
+    <div class="wheel-pointer">▼</div>
+    <canvas id="wheel-canvas"></canvas>
+  </div>
+  <button class="wheel-spin-btn" id="wheel-btn" onclick="spinWheel()">GIRA!</button>
+  <p class="wheel-result" id="wheel-result"></p>
+  <button class="wheel-next-btn" id="wheel-next-btn" onclick="goTo('final')">Continua →</button>
+</div>
+
 <!-- ══════════════════════ FINAL ══════════════════════ -->
 <div id="screen-final" class="screen">
   <a class="whatsapp-btn" id="wa-btn" href="#" target="_blank" rel="noopener">
@@ -971,8 +1122,8 @@
   <a id="wa-photo-btn" href="#" target="_blank" rel="noopener">
     <img class="final-photo" src="images/img.png" alt="">
   </a>
-  <p class="final-text" id="final-text">Grazie, ora puoi andare a fanculo, con affetto</p>
-  <p class="final-subtext" id="final-subtext">A presto a Napoli 🍕<br><br>Per autostrada, carburante e sosta auto la quota è circa 25/30€ a testa!! </p>
+  <p class="final-text" id="final-text">Grazie... puoi andare a fanculo, con affetto</p>
+  <p class="final-subtext" id="final-subtext">Clicca sull'icona Whatsapp e fammi sapere. <br>A presto a Napoli 🍕</p>
 </div>
 
 <!-- ══════════════════════ SUCCESS ══════════════════════ -->
@@ -982,6 +1133,19 @@
     <div class="success-icon">🎉</div>
     <p class="success-title">Accesso Riuscito!</p>
     <p class="success-subtitle" id="success-subtitle">Benvenuta...</p>
+  </div>
+</div>
+
+<!-- ══════════════════════ EXPLOSION CANVAS ══════════════════════ -->
+<canvas id="explosion-canvas"></canvas>
+
+<!-- ══════════════════════ PRIZE CLOUD ══════════════════════ -->
+<div id="prize-cloud-overlay" style="display:none">
+  <div class="prize-cloud">
+    <span class="prize-cloud-emoji">🎁</span>
+    <p class="prize-cloud-text">Hai vinto una quota di 25/30€ da pagare per autostrada, carburante e sosta auto!!</p>
+    <p class="prize-countdown-label">Puoi ritirarlo in cassa tra:</p>
+    <span class="prize-countdown" id="prize-countdown">10</span>
   </div>
 </div>
 
@@ -1006,6 +1170,7 @@ const screens = [
   'scratch','success'
 ];
 let currentScreen = 'loader';
+let _waBaseMsg = '';
 
 function goTo(name) {
   const prev = document.getElementById('screen-' + currentScreen);
@@ -1024,6 +1189,9 @@ function goTo(name) {
       buildCalendar();
       updateCalendarUI();
       startCalendarIdleTimer();
+    }
+    if (name === 'wheel') {
+      initWheel();
     }
     if (name === 'final') {
       animateFinalText();
@@ -1112,6 +1280,21 @@ function playCoinSound() {
   });
 }
 
+// ─── DAY POP SOUND (global scope — called from onDayClick) ───────────────────
+function playDayPop() {
+  if (!_audioCtx) return;
+  const t = _audioCtx.currentTime;
+  const osc = _audioCtx.createOscillator();
+  const gain = _audioCtx.createGain();
+  osc.connect(gain); gain.connect(_audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(600, t);
+  osc.frequency.exponentialRampToValueAtTime(900, t + 0.06);
+  gain.gain.setValueAtTime(0.18, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+  osc.start(t); osc.stop(t + 0.1);
+}
+
 // ─── INTRO ────────────────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
   // Preload images in background
@@ -1158,20 +1341,6 @@ window.addEventListener('load', () => {
 
     // Advance to profiles after animation (~4.2s)
     setTimeout(() => goTo('profiles'), 4200);
-  }
-
-  function playDayPop() {
-    if (!_audioCtx) return;
-    const t = _audioCtx.currentTime;
-    const osc = _audioCtx.createOscillator();
-    const gain = _audioCtx.createGain();
-    osc.connect(gain); gain.connect(_audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(600, t);
-    osc.frequency.exponentialRampToValueAtTime(900, t + 0.06);
-    gain.gain.setValueAtTime(0.18, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-    osc.start(t); osc.stop(t + 0.1);
   }
 
   function playTick() {
@@ -1251,6 +1420,7 @@ window.addEventListener('load', () => {
       });
       doSpin(['7','7','7'], [1100, 1800, 2500], () => {
         playWinSound();
+        triggerSlotExplosion();
         const cab = document.getElementById('lever-wrap');
         cab.classList.add('shaking');
         cab.addEventListener('animationend', () => cab.classList.remove('shaking'), { once: true });
@@ -1644,22 +1814,24 @@ async function confirmCalendar() {
 
 async function doConfirm() {
   const days = [...calSelectedDays].sort((a, b) => a - b);
-  await getSbClient().from('Votes').upsert({ name: currentUser, days }, { onConflict: 'name' });
+  const sb = getSbClient();
+  const { data: existing } = await sb.from('Votes').select('id').eq('name', currentUser).maybeSingle();
+  if (existing) {
+    await sb.from('Votes').update({ days }).eq('id', existing.id);
+  } else {
+    await sb.from('Votes').insert({ name: currentUser, days });
+  }
 
-  switchToBgAudio('napule-audio', 0.3);
-
-  // Genera link WhatsApp con resoconto
+  // Salva il messaggio base — il premio verrà aggiunto dopo la ruota
   const dayNames = ['','1 Nov','2 Nov','3 Nov','4 Nov','5 Nov','6 Nov','7 Nov',
     '8 Nov','9 Nov','10 Nov','11 Nov','12 Nov','13 Nov','14 Nov','15 Nov',
     '16 Nov','17 Nov','18 Nov','19 Nov','20 Nov','21 Nov','22 Nov','23 Nov',
     '24 Nov','25 Nov','26 Nov','27 Nov','28 Nov','29 Nov','30 Nov'];
   const dayList = days.map(d => dayNames[d]).join(', ');
-  const msg = `🗳️ Voto di ${currentUser.charAt(0).toUpperCase()+currentUser.slice(1)}:\nGiorni scelti: ${dayList} 🍕`;
-  const waUrl = 'https://wa.me/393892194876?text=' + encodeURIComponent(msg);
-  document.getElementById('wa-btn').href = waUrl;
-  document.getElementById('wa-photo-btn').href = waUrl;
+  _waBaseMsg = `🗳️ Voto di ${currentUser.charAt(0).toUpperCase()+currentUser.slice(1)}:\nGiorni scelti: ${dayList} 🍕`;
 
-  goTo('final');
+  switchToBgAudio('napule-audio', 0.3);
+  goTo('scratch');
 }
 
 // ─── SCRATCH CARD ────────────────────────────────────────────────────────────
@@ -1691,20 +1863,33 @@ function initScratchCard() {
   }
 
   let scratching = false;
-  let scratchedArea = 0;
-  const total = canvas.width * canvas.height;
   let advanced = false;
+  let checkCounter = 0;
+
+  function getRealPercent() {
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let transparent = 0;
+    // campiona 1 pixel ogni 16 per performance
+    for (let i = 3; i < data.length; i += 4 * 16) {
+      if (data[i] < 128) transparent++;
+    }
+    return transparent / (data.length / 4 / 16);
+  }
 
   function scratchAt(x, y) {
     ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
     ctx.arc(x, y, 26, 0, Math.PI * 2);
     ctx.fill();
-    scratchedArea += Math.PI * 26 * 26;
-    if (!advanced && scratchedArea / total > 0.65) {
-      advanced = true;
-      canvas.style.pointerEvents = 'none';
-      setTimeout(() => goTo('calendar'), 500);
+    if (advanced) return;
+    // controlla ogni 8 eventi per non pesare troppo
+    checkCounter++;
+    if (checkCounter % 8 === 0) {
+      if (getRealPercent() >= 0.80) {
+        advanced = true;
+        canvas.style.pointerEvents = 'none';
+        setTimeout(() => showPrizeCloud(), 500);
+      }
     }
   }
 
@@ -1742,6 +1927,267 @@ function animateFinalText() {
   const delay = 0.4 + text.length * 0.045 + 0.5;
   sub.style.cssText = `opacity:0; transform:translateY(10px);
     animation:riseIn 0.8s ease ${delay}s forwards;`;
+}
+
+// ─── PRIZE CLOUD ─────────────────────────────────────────────────────────────
+function showPrizeCloud() {
+  const overlay  = document.getElementById('prize-cloud-overlay');
+  const countEl  = document.getElementById('prize-countdown');
+  overlay.style.display = 'flex';
+  let count = 10;
+  countEl.textContent = count;
+  const iv = setInterval(() => {
+    count--;
+    countEl.textContent = count;
+    if (count <= 0) {
+      clearInterval(iv);
+      overlay.style.display = 'none';
+      goTo('wheel');
+    }
+  }, 1000);
+}
+
+// ─── WHEEL OF FORTUNE ────────────────────────────────────────────────────────
+const WHEEL_DATA = {
+  nadeska: [
+    { lines: ['🍋', '× 1'],           full: 'Un gelato al limone! 🍋',              color: '#e50914' },
+    { lines: ['Dolcetto', 'Infante'],  full: 'Un dolcetto da Infante! 🍮',           color: '#7b0000' },
+    { lines: ['Funicolare', 'free'],   full: 'Funicolare gratuita! 🚡',              color: '#c0392b' },
+    { lines: ['Bevanda', 'offerta'],   full: 'Una bevanda offerta! 🥤',              color: '#5a0000' },
+    { lines: ['Gratta&V.', '5€'],      full: 'Un gratta e vinci da 5€! 🎰',          color: '#e50914' },
+    { lines: ['👎'],                   full: 'Nulla... peggio per te!',              color: '#7b0000' },
+  ],
+  franceska: [
+    { lines: ['Gratta&V.', '5€'],      full: 'Un gratta e vinci da 5€! 🎰',          color: '#e50914' },
+    { lines: ['Funicolare', 'free'],   full: 'Funicolare gratuita! 🚡',              color: '#7b0000' },
+    { lines: ['Palazzo', 'Reale'],     full: 'Biglietto Palazzo Reale! 🏛️',          color: '#c0392b' },
+    { lines: ['👎'],                   full: 'Nulla... peggio per te!',              color: '#5a0000' },
+    { lines: ['Playlist', "30'"],      full: '30 min di tua playlist! 🎵',           color: '#e50914' },
+    { lines: ['Dolcetto', 'Infante'],  full: 'Un dolcetto da Infante! 🍮',           color: '#7b0000' },
+  ]
+};
+
+let _wheelAngle = 0;
+let _wheelSpinning = false;
+let _wheelSegs = [];
+
+function initWheel() {
+  _wheelAngle   = 0;
+  _wheelSpinning = false;
+  _wheelSegs    = WHEEL_DATA[currentUser] || WHEEL_DATA.nadeska;
+
+  const btn     = document.getElementById('wheel-btn');
+  const result  = document.getElementById('wheel-result');
+  const nextBtn = document.getElementById('wheel-next-btn');
+  btn.disabled = false;
+  result.style.opacity = '0';
+  result.textContent = '';
+  nextBtn.classList.remove('ready');
+
+  const canvas = document.getElementById('wheel-canvas');
+  const size   = Math.min(window.innerWidth * 0.82, 340);
+  canvas.width  = size;
+  canvas.height = size;
+  _drawWheel(canvas, _wheelAngle);
+}
+
+function _drawWheel(canvas, rotation) {
+  const ctx  = canvas.getContext('2d');
+  const segs = _wheelSegs;
+  const N    = segs.length;
+  const R    = canvas.width / 2;
+  const cx   = R, cy = R;
+  const seg  = (2 * Math.PI) / N;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < N; i++) {
+    const a0 = rotation + i * seg;
+    const a1 = a0 + seg;
+
+    // spicchio
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R - 4, a0, a1);
+    ctx.closePath();
+    ctx.fillStyle = segs[i].color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // testo multi-riga — dopo rotate(), X punta verso l'esterno, Y è tangenziale
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(a0 + seg / 2);
+
+    const lines    = segs[i].lines;
+    const hasLong  = lines.some(l => [...l].length > 5);
+    const fontSize = Math.round(R * (hasLong ? 0.11 : 0.14));
+    const lh       = fontSize * 1.35;
+    const startY   = -((lines.length - 1) * lh) / 2;
+
+    ctx.font        = `bold ${fontSize}px Georgia`;
+    ctx.textAlign   = 'center';
+    ctx.fillStyle   = '#ffd700';
+    ctx.shadowColor = 'rgba(0,0,0,0.75)';
+    ctx.shadowBlur  = 5;
+
+    lines.forEach((line, li) => {
+      ctx.fillText(line, R * 0.58, startY + li * lh + fontSize * 0.36);
+    });
+
+    ctx.restore();
+  }
+
+  // bordo esterno
+  ctx.beginPath();
+  ctx.arc(cx, cy, R - 4, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  // perno centrale
+  ctx.beginPath();
+  ctx.arc(cx, cy, R * 0.09, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffd700';
+  ctx.shadowColor = 'rgba(255,215,0,0.9)';
+  ctx.shadowBlur = 12;
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function spinWheel() {
+  if (_wheelSpinning) return;
+  _wheelSpinning = true;
+  document.getElementById('wheel-btn').disabled = true;
+
+  const canvas      = document.getElementById('wheel-canvas');
+  const N           = _wheelSegs.length;
+  const totalSpin   = (6 + Math.random() * 5) * Math.PI * 2;
+  const duration    = 4000 + Math.random() * 2000;
+  const startAngle  = _wheelAngle;
+  const targetAngle = startAngle + totalSpin;
+  const startTime   = performance.now();
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+
+  function tick(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    _wheelAngle = startAngle + (targetAngle - startAngle) * easeOut(t);
+    _drawWheel(canvas, _wheelAngle);
+
+    if (t < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      _wheelAngle    = targetAngle;
+      _wheelSpinning = false;
+
+      // puntatore in alto (−π/2): calcola lo spicchio vincente
+      const segAngle   = (2 * Math.PI) / N;
+      const normalized = ((-Math.PI / 2 - _wheelAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+      const winner     = Math.floor(normalized / segAngle) % N;
+
+      if (_audioCtx) {
+        [523, 659, 784, 1047].forEach((freq, i) => {
+          const t2 = _audioCtx.currentTime + i * 0.1;
+          const osc = _audioCtx.createOscillator();
+          const g   = _audioCtx.createGain();
+          osc.connect(g); g.connect(_audioCtx.destination);
+          osc.type = 'square'; osc.frequency.value = freq;
+          g.gain.setValueAtTime(0.1, t2);
+          g.gain.exponentialRampToValueAtTime(0.001, t2 + 0.16);
+          osc.start(t2); osc.stop(t2 + 0.16);
+        });
+      }
+
+      setTimeout(() => {
+        const result  = document.getElementById('wheel-result');
+        const nextBtn = document.getElementById('wheel-next-btn');
+        const prize   = _wheelSegs[winner].full;
+        result.textContent = '🎯 ' + prize;
+        result.style.opacity = '1';
+        nextBtn.classList.add('ready');
+
+        // Completa il link WhatsApp con il premio reale della ruota
+        const fullMsg = _waBaseMsg + '\n\nIn omaggio per te: ' + prize;
+        const waUrl   = 'https://wa.me/393892194876?text=' + encodeURIComponent(fullMsg);
+        document.getElementById('wa-btn').href      = waUrl;
+        document.getElementById('wa-photo-btn').href = waUrl;
+      }, 400);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// ─── SLOT EXPLOSION ──────────────────────────────────────────────────────────
+function triggerSlotExplosion() {
+  const canvas = document.getElementById('explosion-canvas');
+  canvas.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height * 0.5;
+  const colors = ['#e50914','#ffd700','#fff','#ff8800','#44ff88','#ff44aa','#00ccff','#ffcc00'];
+  const particles = [];
+
+  function addBurst(ox, oy, count, speedMult) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = (5 + Math.random() * 13) * speedMult;
+      particles.push({
+        x: cx + ox, y: cy + oy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 3 + Math.random() * 9,
+        alpha: 1,
+        gravity: 0.18 + Math.random() * 0.15,
+        decay: 0.011 + Math.random() * 0.011,
+        isRect: Math.random() > 0.5,
+        rot: Math.random() * 360,
+        vr: (Math.random() - 0.5) * 9,
+        w: 5 + Math.random() * 10, h: 3 + Math.random() * 6,
+      });
+    }
+  }
+
+  addBurst(0, 0, 100, 1);
+  setTimeout(() => addBurst(-30, -20, 60, 0.85), 180);
+  setTimeout(() => addBurst(30, -20, 60, 0.85), 360);
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      if (p.alpha <= 0) return;
+      alive = true;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.fillStyle = p.color;
+      if (p.isRect) {
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot * Math.PI / 180);
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      p.x += p.vx; p.y += p.vy;
+      p.vy += p.gravity; p.vx *= 0.985;
+      p.rot += p.vr;
+      p.alpha -= p.decay;
+    });
+    if (alive) requestAnimationFrame(draw);
+    else { canvas.style.display = 'none'; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  }
+  draw();
 }
 
 </script>
