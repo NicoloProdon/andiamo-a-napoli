@@ -61,15 +61,61 @@
 
   /* Slot machine cabinet */
   .slot-cabinet {
-    display:flex; flex-direction:column; align-items:center;
+    display:flex; flex-direction:row; align-items:center; justify-content:center;
     background:linear-gradient(to bottom,#222,#111);
     border:3px solid #666;
     border-radius:14px;
-    padding:clamp(16px,5vw,28px) clamp(24px,8vw,48px);
+    padding:clamp(16px,5vw,28px) clamp(14px,4vw,24px);
     box-shadow:0 0 28px rgba(255,215,0,0.2), inset 0 2px 4px rgba(255,255,255,0.05);
-    gap:clamp(14px,4vh,24px);
+    gap:clamp(10px,3vw,16px);
     cursor:pointer;
     min-width:clamp(140px,40vw,220px);
+    position:relative; overflow:visible;
+  }
+  .slot-main-col {
+    display:flex; flex-direction:column; align-items:center;
+    gap:clamp(10px,3vh,18px);
+  }
+  .slot-mouth {
+    width:clamp(60px,17vw,100px); height:clamp(16px,4.5vw,26px);
+    background:#111; border:3px solid #cc2200;
+    border-radius:0 0 50% 50% / 0 0 100% 100%;
+    box-shadow:inset 0 4px 8px rgba(0,0,0,0.9), 0 2px 6px rgba(200,30,0,0.4);
+    position:relative;
+  }
+  .slot-mouth::after {
+    content:''; position:absolute; left:50%; top:3px;
+    transform:translateX(-50%);
+    width:60%; height:4px; background:#cc2200; border-radius:2px;
+    opacity:0.7;
+  }
+  .slot-tongue-wrap {
+    position:absolute; pointer-events:none; z-index:25;
+    /* wide enough so the wagging tongue never clips on the sides */
+    width:clamp(160px,45vw,220px); overflow:hidden;
+    animation:slotTongueReveal 2.8s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+  .slot-tongue-inner {
+    /* actual tongue width, centered inside the wide clip area */
+    width:clamp(48px,14vw,72px); margin:0 auto;
+    transform-origin:50% 0%;
+    animation:slotTongueWag 2.8s ease-in-out forwards;
+  }
+  @keyframes slotTongueReveal {
+    0%   { height:0; }
+    20%  { height:90px; }
+    78%  { height:90px; }
+    100% { height:0; }
+  }
+  @keyframes slotTongueWag {
+    0%   { transform:rotate(0deg); }
+    22%  { transform:rotate(-20deg); }
+    36%  { transform:rotate(18deg); }
+    50%  { transform:rotate(-15deg); }
+    64%  { transform:rotate(13deg); }
+    76%  { transform:rotate(-8deg); }
+    88%  { transform:rotate(5deg); }
+    100% { transform:rotate(0deg); }
   }
   /* Coin slot opening */
   .coin-slot-opening {
@@ -124,7 +170,7 @@
     box-shadow:inset 0 3px 12px rgba(0,0,0,0.9);
   }
   .slot-reel-window {
-    width:clamp(46px,12vw,70px); height:clamp(46px,12vw,70px);
+    width:clamp(72px,19vw,108px); height:clamp(72px,19vw,108px);
     background:#f5f0e0; border-radius:5px;
     display:flex; align-items:center; justify-content:center;
     border:2px solid #aaa;
@@ -148,7 +194,7 @@
   }
   .slot-cabinet.shaking { animation:slotShake 0.5s ease-in-out 2; }
   .slot-symbol {
-    font-size:clamp(22px,6.5vw,42px); font-weight:900;
+    font-size:clamp(38px,10vw,62px); font-weight:900;
     font-family:'Courier New',monospace; color:#222;
     line-height:1; user-select:none;
   }
@@ -302,6 +348,31 @@
   }
   .unlock-btn:hover { background:#f40612; transform:scale(1.03); }
   .unlock-btn:active { transform:scale(0.95); }
+  .swipe-unlock {
+    position:relative; overflow:hidden;
+    width:clamp(200px,55vw,280px); height:clamp(50px,10vw,62px);
+    background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.3);
+    border-radius:9999px; cursor:pointer; user-select:none; touch-action:pan-y;
+    display:flex; align-items:center; padding:0 12px;
+  }
+  .swipe-unlock-track {
+    position:absolute; inset:0; border-radius:9999px;
+    background:linear-gradient(90deg,rgba(255,255,255,0.0),rgba(255,255,255,0.3));
+    width:0%; transition:none; pointer-events:none;
+  }
+  .swipe-unlock-thumb {
+    position:relative; z-index:2;
+    width:clamp(38px,8vw,48px); height:clamp(38px,8vw,48px);
+    background:#ffffff; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.4em; box-shadow:0 2px 8px rgba(0,0,0,0.4);
+    flex-shrink:0; color:#222;
+  }
+  .swipe-unlock-label {
+    position:absolute; left:50%; transform:translateX(-50%);
+    font-size:clamp(11px,2.8vw,15px); letter-spacing:3px;
+    color:rgba(255,255,255,0.6); pointer-events:none; white-space:nowrap;
+  }
   .back-btn {
     position:absolute; top:16px; left:16px;
     background:none; border:none;
@@ -470,18 +541,20 @@
     width:100%; text-align:center;
   }
   .welcome-continue-btn {
-    margin-top:8px;
-    background:transparent;
-    border:2px solid rgba(255,255,255,0.3);
-    color:#fff; padding:clamp(13px,3vw,16px) clamp(32px,8vw,48px);
-    font-size:clamp(16px,4vw,20px); border-radius:4px;
-    cursor:pointer; letter-spacing:2px;
-    text-transform:uppercase;
-    transition:border-color 0.2s, background 0.2s;
+    position:fixed; right:clamp(12px,3vw,28px); top:50%; transform:translateY(-50%);
+    width:clamp(48px,10vw,64px); height:clamp(48px,10vw,64px);
+    background:rgba(255,255,255,0.12); border:2px solid rgba(255,255,255,0.4);
+    border-radius:50%; color:#fff; font-size:clamp(22px,5vw,30px);
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(6px); z-index:50;
+    transition:background 0.2s, transform 0.2s, border-color 0.2s;
   }
   .welcome-continue-btn:hover {
-    border-color:#fff;
-    background:rgba(255,255,255,0.1);
+    background:rgba(255,255,255,0.25); border-color:#fff;
+    transform:translateY(-50%) scale(1.1);
+  }
+  .welcome-continue-btn:active {
+    transform:translateY(-50%) scale(0.93);
   }
 
   #screen-nadeska-welcome {
@@ -734,46 +807,104 @@
     to   { opacity:1; transform:translateY(0); }
   }
 
-  /* ─── SCRATCH CARD ─── */
+  /* ─── FIGHT GAME ─── */
   #screen-scratch {
-    background: radial-gradient(ellipse at center, #1a0505 0%, #000 70%);
-    padding: 0 clamp(16px,4vw,24px);
+    background: radial-gradient(ellipse at center, #0a0205 0%, #000 70%);
+    padding: 0 clamp(12px,3vw,20px);
   }
-  .scratch-container {
+  .fight-container {
     display:flex; flex-direction:column; align-items:center;
-    gap:clamp(18px,5vw,28px);
-    width: 100%;
+    gap:10px; width:100%; max-width:500px;
   }
-  .scratch-hint {
-    color:#aaa; font-size:clamp(15px,4vw,19px);
-    letter-spacing:2px; font-style:italic;
-    text-align:center; width:100%;
+  .fight-title {
+    color:#e50914; font-size:clamp(18px,5vw,26px);
+    letter-spacing:5px; font-weight:bold; font-family:monospace;
+    text-shadow:0 0 12px rgba(229,9,20,0.7);
+    animation:fightBlink 0.9s step-end infinite;
   }
-  .scratch-card-wrap {
-    position:relative;
-    width:clamp(260px,80vw,380px); height:clamp(130px,42vw,190px);
-    border-radius:14px; overflow:hidden;
-    box-shadow:0 8px 32px rgba(0,0,0,0.7), 0 0 0 2px rgba(255,215,0,0.3);
+  @keyframes fightBlink { 50%{opacity:0.3} }
+  .fight-hud {
+    display:flex; width:100%; gap:6px; align-items:center;
   }
-  .scratch-reveal {
+  .fight-hud-side { flex:1; display:flex; flex-direction:column; gap:3px; }
+  .fight-hud-side.right { align-items:flex-end; }
+  .fight-hud-name {
+    color:#fff; font-size:clamp(9px,2.5vw,13px);
+    letter-spacing:2px; font-weight:bold; font-family:monospace;
+  }
+  .fight-hp-wrap {
+    width:100%; height:12px; background:#111;
+    border:2px solid #444; overflow:hidden;
+  }
+  .fight-hp-fill { height:100%; transition:width 0.1s linear; }
+  .fight-hp-fill.enemy-bar  { float:right; background:linear-gradient(270deg,#cc0000,#ff3333); }
+  .fight-hp-fill.player-bar { background:linear-gradient(90deg,#3399ff,#66bbff); }
+  .fight-vs {
+    color:#ffd700; font-size:clamp(14px,4vw,20px); font-weight:bold;
+    letter-spacing:2px; text-shadow:0 0 8px rgba(255,215,0,0.8);
+    flex-shrink:0; font-family:monospace;
+  }
+  #fight-canvas {
+    width:100%; max-width:500px; height:auto; display:block;
+    border:2px solid #333; cursor:pointer;
+    touch-action:none; user-select:none; image-rendering:pixelated;
+  }
+  .fight-combo {
+    font-size:clamp(18px,5vw,28px); font-weight:bold; color:#e50914;
+    letter-spacing:3px; min-height:36px; font-family:monospace;
+    text-shadow:0 0 15px rgba(255,215,0,0.9); text-align:center;
+  }
+  .fight-hint {
+    color: #ececec; font-size:clamp(13px,3.5vw,17px);
+    letter-spacing:2px; font-style:italic; text-align:center;
+    animation:hintPulse 1.3s ease-in-out infinite;
+  }
+  @keyframes hintPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .fight-arena {
+    position:relative; width:100%; max-width:500px;
+  }
+  #fight-canvas {
+    width:100%; height:auto; display:block;
+    border:2px solid #333; cursor:pointer;
+    touch-action:none; user-select:none; image-rendering:pixelated;
+  }
+  .fight-intro-overlay {
     position:absolute; inset:0;
-    background:linear-gradient(135deg, #1a0000 0%, #3a0000 50%, #1a0000 100%);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:8px;
+    background:rgba(0,0,0,0.88);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:14px; border:2px solid #e50914;
+    font-family:monospace; padding:16px;
+    box-sizing:border-box;
   }
-  .scratch-reveal-text {
-    font-size:clamp(20px,6.5vw,34px); font-weight:bold; color:#ffd700;
-    text-align:center; letter-spacing:3px;
-    text-shadow:0 0 20px rgba(255,215,0,0.7), 0 0 40px rgba(255,215,0,0.3);
+  .fight-intro-title {
+    color:#e50914; font-size:clamp(22px,6vw,36px);
+    font-weight:bold; letter-spacing:6px;
+    text-shadow:0 0 16px rgba(229,9,20,0.8);
+    animation:fightBlink 0.9s step-end infinite;
   }
-  .scratch-reveal-sub {
-    font-size:clamp(13px,3.5vw,17px); color:rgba(255,215,0,0.6);
-    letter-spacing:1px;
+  .fight-intro-body {
+    color:#fff; font-size:clamp(14px,4vw,20px);
+    text-align:center; line-height:1.5; letter-spacing:1px;
   }
-  #scratch-canvas {
-    position:absolute; inset:0; width:100%; height:100%;
-    cursor:crosshair; touch-action:none; border-radius:14px;
+  .fight-intro-body strong {
+    color:#ffd700;
+    text-shadow:0 0 10px rgba(255,215,0,0.7);
   }
+  .fight-intro-sub {
+    color:#aaa; font-size:clamp(11px,3vw,15px);
+    text-align:center; letter-spacing:1px; font-style:italic;
+  }
+  .fight-intro-btn {
+    background:#e50914; color:#fff;
+    border:none; border-radius:4px;
+    font-size:clamp(16px,4.5vw,22px); font-weight:bold;
+    font-family:monospace; letter-spacing:3px;
+    padding:10px 28px; cursor:pointer;
+    box-shadow:0 0 16px rgba(229,9,20,0.6);
+    animation:fightBlink 0.9s step-end infinite;
+  }
+  .fight-intro-btn:active { transform:scale(0.95); }
 
   /* ─── VANNACCI MESSAGE ─── */
   #vannacci-msg {
@@ -1018,11 +1149,14 @@
   <div id="intro-tap-overlay">
     <div class="coin-insert-text">INSERT COIN</div>
     <div class="slot-cabinet" id="lever-wrap">
-      <div class="coin-slot-opening"></div>
-      <div class="slot-reels-row">
-        <div class="slot-reel-window"><span class="slot-symbol" id="sym-0">♥</span></div>
-        <div class="slot-reel-window"><span class="slot-symbol" id="sym-1">★</span></div>
-        <div class="slot-reel-window"><span class="slot-symbol" id="sym-2">♦</span></div>
+      <div class="slot-main-col">
+        <div class="coin-slot-opening"></div>
+        <div class="slot-reels-row">
+          <div class="slot-reel-window"><span class="slot-symbol" id="sym-0">♥</span></div>
+          <div class="slot-reel-window"><span class="slot-symbol" id="sym-1">★</span></div>
+          <div class="slot-reel-window"><span class="slot-symbol" id="sym-2">♦</span></div>
+        </div>
+        <div class="slot-mouth" id="slot-mouth"></div>
       </div>
       <div class="lever-wrap">
         <div class="lever-inner" id="lever-inner">
@@ -1066,7 +1200,11 @@
       <input class="pin-box" maxlength="1" id="n3" autocomplete="off" inputmode="text">
     </div>
     <div class="idle-warning" id="nadeska-idle-warn">VELOCE IL TEMPO STRINGE</div>
-    <button class="unlock-btn" onclick="checkPin('nadeska')">Sblocca</button>
+    <div class="swipe-unlock" id="swipe-nadeska">
+      <div class="swipe-unlock-track" id="swipe-nadeska-track"></div>
+      <div class="swipe-unlock-thumb">→</div>
+      <span class="swipe-unlock-label">SBLOCCA</span>
+    </div>
   </div>
 </div>
 
@@ -1091,7 +1229,11 @@
       </div>
     </div>
     <div class="idle-warning" id="franceska-idle-warn">VELOCE IL TEMPO STRINGE</div>
-    <button class="unlock-btn" onclick="checkPin('franceska')">Sblocca</button>
+    <div class="swipe-unlock" id="swipe-franceska">
+      <div class="swipe-unlock-track" id="swipe-franceska-track"></div>
+      <div class="swipe-unlock-thumb">→</div>
+      <span class="swipe-unlock-label">SBLOCCA</span>
+    </div>
     <p class="sherlock-quote">"Il mondo è pieno di cose ovvie che nessuno si cura mai di osservare." — SH</p>
   </div>
 </div>
@@ -1100,7 +1242,7 @@
 <div id="screen-nadeska-welcome" class="screen">
   <div class="welcome-content">
     <div class="welcome-avatar"><img src="images/nadeska.jpeg" alt="Nadeska"></div>
-    <p class="welcome-name">Ciao, Nadeska</p>
+    <p class="welcome-name">Bentornata</p>
     <p class="welcome-irony">
       Nadeska. Un nome che significa <em>speranza</em>.
       Speranza di cosa, esattamente? Di trovare parcheggio a Napoli?
@@ -1112,7 +1254,7 @@
       Ma in fondo... portare speranza è il dono piu' raro.
       E tu lo fai senza nemmeno accorgertene. Ti amo <3 ✨
     </p>
-    <button class="welcome-continue-btn" onclick="goTo('calendar')">Avanti →</button>
+    <button class="welcome-continue-btn" onclick="goTo('calendar')">&#10140;</button>
   </div>
 </div>
 
@@ -1120,7 +1262,7 @@
 <div id="screen-franceska-welcome" class="screen">
   <div class="welcome-content">
     <div class="welcome-avatar"><img src="images/franceska.jpeg" alt="Franceska"></div>
-    <p class="welcome-name">Ciao, Franceska</p>
+    <p class="welcome-name">Bentornata</p>
     <p class="welcome-irony">
       <em>Franceska</em>.
       Il nome piu' comune d'Italia, scelto probabilmente lanciando
@@ -1133,22 +1275,40 @@
       E tu sei la prova vivente che non serve un nome esotico
       per essere del tutto unica. 🌟
     </p>
-    <button class="welcome-continue-btn" onclick="goTo('calendar')">Avanti →</button>
+    <button class="welcome-continue-btn" onclick="goTo('calendar')">&#10140;</button>
   </div>
 </div>
 
-<!-- ══════════════════════ SCRATCH CARD ══════════════════════ -->
+<!-- ══════════════════════ FIGHT GAME ══════════════════════ -->
 <div id="screen-scratch" class="screen">
-  <div class="scratch-container">
-    <p class="scratch-hint">GRATTA e VINCI stile SHEIN</p>
-    <p class="scratch-hint">Gratta almeno l'80% per rivelare il premio...</p>
-    <div class="scratch-card-wrap">
-      <div class="scratch-reveal">
-        <p class="scratch-reveal-text">HAI VINTO!</p>
-        <p class="scratch-reveal-sub">Ma che coincidenza!! 🎁</p>
+  <div class="fight-container">
+    <p class="fight-title">★ ROUND 1 ★</p>
+    <div class="fight-hud">
+      <div class="fight-hud-side left">
+        <span class="fight-hud-name" id="fight-player-name">PLAYER</span>
+        <div class="fight-hp-wrap">
+          <div class="fight-hp-fill player-bar" id="player-hp-fill" style="width:100%"></div>
+        </div>
       </div>
-      <canvas id="scratch-canvas"></canvas>
+      <span class="fight-vs">VS</span>
+      <div class="fight-hud-side right">
+        <span class="fight-hud-name" id="fight-enemy-name">USAvAGIINA</span>
+        <div class="fight-hp-wrap">
+          <div class="fight-hp-fill enemy-bar" id="enemy-hp-fill" style="width:100%"></div>
+        </div>
+      </div>
     </div>
+    <div class="fight-arena">
+      <canvas id="fight-canvas" width="480" height="300"></canvas>
+      <div id="fight-intro" class="fight-intro-overlay">
+        <p class="fight-intro-title">★ SFIDA! ★</p>
+        <p class="fight-intro-body">Picchia il nemico e vinci un<br><strong>PREMIO MISTERIOSO 🎁</strong></p>
+        <p class="fight-intro-sub">Tocca / Clicca per sferrare pugni!</p>
+        <button class="fight-intro-btn" id="fight-start-btn">⚔️ INIZIA! ⚔️</button>
+      </div>
+    </div>
+    <p class="fight-combo" id="fight-combo"></p>
+    <p class="fight-hint" id="fight-hint"></p>
   </div>
 </div>
 
@@ -1167,7 +1327,7 @@
 
 <!-- ══════════════════════ WHEEL ══════════════════════ -->
 <div id="screen-wheel" class="screen">
-  <p class="wheel-intro">Vabbè... ti concedo <em>veramente</em> un premio.</p>
+  <p class="wheel-intro">Vabbè... ti concedo un premio stile SHEIN.</p>
   <p class="wheel-sub">Gira la ruota!</p>
   <div class="wheel-outer-wrap">
     <div class="wheel-pointer">▼</div>
@@ -1210,7 +1370,7 @@
   <a id="wa-photo-btn" href="#" target="_blank" rel="noopener">
     <img class="final-photo" src="images/img.png" alt="">
   </a>
-  <p class="final-text" id="final-text">Grazie... puoi andare a fanculo, con affetto</p>
+  <p class="final-text" id="final-text">Grazie... menomale che a te piace la pizza nabboletana ❤️</p>
   <p class="final-subtext" id="final-subtext">Clicca sull'icona Whatsapp e fammi sapere le tue scelte. <br>A presto a Napoli 🍕</p>
 </div>
 
@@ -1247,7 +1407,8 @@
 <audio id="netflix-audio" src="audio/Netflix New Logo Animation 2019.mp3" preload="auto"></audio>
 <audio id="pianobar-audio" src="audio/Piano Bar-compressed.mp3" preload="auto" loop></audio>
 <audio id="napule-audio" src="audio/Napule.mp3" preload="auto"></audio>
-<audio id="vivimi-audio" src="audio/Vivimi.mp3" preload="auto" loop></audio>
+<audio id="vivimi-audio" src="audio/Vivimi.mp3" preload="auto"></audio>
+<audio id="tetris-audio" src="audio/Tetris.mp3" preload="auto" loop></audio>
 
 <script>
 // ─── SCREEN MANAGEMENT ───────────────────────────────────────────────────────
@@ -1271,6 +1432,12 @@ function goTo(name) {
     if (name === 'scratch') {
       initScratchCard();
     }
+    if (name === 'nadeska-unlock') {
+      setupSwipeUnlock('nadeska', 'nadeska');
+    }
+    if (name === 'franceska-unlock') {
+      setupSwipeUnlock('franceska', 'franceska');
+    }
     if (name === 'calendar') {
       calSelectedDays  = new Set();
       blockedDismissed = new Set();
@@ -1282,6 +1449,7 @@ function goTo(name) {
       initWheel();
     }
     if (name === 'final') {
+      switchToBgAudio('napule-audio', 0.3);
       animateFinalText();
     }
   }, 300);
@@ -1318,17 +1486,86 @@ function resetIdleTimer(who) {
 }
 
 // ─── VISIBILITY: pausa/riprendi audio ─────────────────────────────────────────
-const managedAudioIds = ['netflix-audio', 'pianobar-audio', 'vivimi-audio', 'napule-audio', 'vannacci-audio'];
+const managedAudioIds = ['netflix-audio', 'pianobar-audio', 'vivimi-audio', 'napule-audio', 'tetris-audio', 'vannacci-audio'];
 let currentBgAudioId = 'pianobar-audio';
 
-function switchToBgAudio(newId, volume = 0.2) {
-  const prev = document.getElementById(currentBgAudioId);
-  prev.pause(); prev.currentTime = 0;
+function switchToBgAudio(newId, volume = 0.3) {
+  const _sameTrack = currentBgAudioId === newId;
+  // Skip fade only if same track AND already playing
+  if (_sameTrack) {
+    const el = document.getElementById(newId);
+    if (!el.paused) return;
+    el.volume = volume; el.play().catch(() => {}); return;
+  }
+  const prev    = document.getElementById(currentBgAudioId);
+  const startVol = isNaN(prev.volume) ? 0 : prev.volume;
+  const steps   = 18;
+  let   step    = 0;
   currentBgAudioId = newId;
-  const next = document.getElementById(newId);
-  next.volume = volume;
-  next.play().catch(() => {});
+
+  const fade = setInterval(() => {
+    step++;
+    prev.volume = Math.max(0, startVol * (1 - step / steps));
+    if (step >= steps) {
+      clearInterval(fade);
+      prev.pause(); prev.currentTime = 0; prev.volume = startVol || volume;
+      const next = document.getElementById(newId);
+      next.volume = 0;
+      next.play().catch(() => {});
+      let si = 0;
+      const fadeIn = setInterval(() => {
+        si++;
+        next.volume = Math.min(volume, volume * si / steps);
+        if (si >= steps) { next.volume = volume; clearInterval(fadeIn); }
+      }, 25);
+    }
+  }, 25);
 }
+// ─── VIVIMI FADE-LOOP ─────────────────────────────────────────────────────────
+(function() {
+  const el    = document.getElementById('vivimi-audio');
+  const FADE  = 2.5;   // seconds before end to start fading out
+  let fading  = false;
+  let fadeInt = null;
+
+  el.addEventListener('timeupdate', () => {
+    if (currentBgAudioId !== 'vivimi-audio') { fading = false; return; }
+    if (!el.duration || el.paused) return;
+    const remaining = el.duration - el.currentTime;
+    if (remaining <= FADE && !fading) {
+      fading = true;
+      const startVol = el.volume;
+      const steps    = Math.round(FADE * 1000 / 25);
+      let   step     = 0;
+      fadeInt = setInterval(() => {
+        // abort if another track took over
+        if (currentBgAudioId !== 'vivimi-audio') {
+          clearInterval(fadeInt); fading = false; return;
+        }
+        step++;
+        el.volume = Math.max(0, startVol * (1 - step / steps));
+        if (step >= steps) {
+          clearInterval(fadeInt);
+          // abort restart if track was switched during the fade
+          if (currentBgAudioId !== 'vivimi-audio') { fading = false; return; }
+          el.pause();
+          el.currentTime = 0;
+          el.volume = 0;
+          el.play().catch(() => {});
+          // fade back in
+          let si = 0;
+          const fadeIn = setInterval(() => {
+            if (currentBgAudioId !== 'vivimi-audio') { clearInterval(fadeIn); fading = false; return; }
+            si++;
+            el.volume = Math.min(startVol, startVol * si / steps);
+            if (si >= steps) { el.volume = startVol; clearInterval(fadeIn); fading = false; }
+          }, 25);
+        }
+      }, 25);
+    }
+  });
+})();
+
 let audioStateBeforeHide = {};
 
 document.addEventListener('visibilitychange', () => {
@@ -1411,7 +1648,7 @@ window.addEventListener('load', () => {
     document.getElementById('intro-tap-overlay').classList.add('hidden');
 
     // Unlock all audio elements on first user gesture (required on iOS)
-    ['pianobar-audio', 'napule-audio', 'vannacci-audio'].forEach(id => {
+    ['pianobar-audio', 'napule-audio', 'tetris-audio', 'vannacci-audio'].forEach(id => {
       const el = document.getElementById(id);
       el.play().then(() => el.pause()).catch(() => {});
     });
@@ -1495,6 +1732,7 @@ window.addEventListener('load', () => {
     if (slotPhase === 0) {
       // Primo giro: risultato sbagliato
       doSpin(['♥','BAR','★'], [1000, 1700, 2400], () => {
+        triggerSlotTongue();
         // Riporta la leva su dopo un po' per permettere secondo giro
         setTimeout(() => {
           inner.classList.remove('pulled');
@@ -1508,6 +1746,7 @@ window.addEventListener('load', () => {
       });
       doSpin(['7','7','7'], [1100, 1800, 2500], () => {
         playWinSound();
+        triggerSlotTongue();
         triggerSlotExplosion();
         const cab = document.getElementById('lever-wrap');
         cab.classList.add('shaking');
@@ -1606,6 +1845,56 @@ let vannacciDismissCallback = null;
 let vannacciCount = 0;
 let vannacciCanDismiss = false;
 
+function setupSwipeUnlock(id, who) {
+  const wrap  = document.getElementById('swipe-' + id);
+  const track = document.getElementById('swipe-' + id + '-track');
+  const thumb = wrap ? wrap.querySelector('.swipe-unlock-thumb') : null;
+  if (!wrap || !thumb) return;
+  const maxSlide = wrap.clientWidth - thumb.offsetWidth - 16;
+  let startX = null, currentX = 0, dragging = false;
+
+  function begin(x) { startX = x; dragging = true; }
+  function move(x) {
+    if (!dragging) return;
+    currentX = Math.max(0, Math.min(x - startX, maxSlide));
+    thumb.style.transform = 'translateX(' + currentX + 'px)';
+    track.style.width = (currentX / maxSlide * 100) + '%';
+  }
+  function resetSwipe() {
+    currentX = 0;
+    dragging = false;
+    wrap.style.pointerEvents = '';
+    thumb.textContent = '→';
+    thumb.style.transition = 'transform 0.35s ease';
+    track.style.transition  = 'width 0.35s ease';
+    thumb.style.transform = 'translateX(0)';
+    track.style.width = '0%';
+    setTimeout(() => { thumb.style.transition = ''; track.style.transition = ''; }, 360);
+  }
+  wrap._resetSwipe = resetSwipe;
+
+  function end() {
+    if (!dragging) return;
+    dragging = false;
+    if (currentX >= maxSlide * 0.82) {
+      thumb.style.transform = 'translateX(' + maxSlide + 'px)';
+      track.style.width = '100%';
+      thumb.textContent = '✓';
+      wrap.style.pointerEvents = 'none';
+      checkPin(who);
+    } else {
+      resetSwipe();
+    }
+  }
+
+  wrap.addEventListener('mousedown',  e => begin(e.clientX));
+  wrap.addEventListener('touchstart', e => begin(e.touches[0].clientX), { passive: true });
+  window.addEventListener('mousemove',  e => move(e.clientX));
+  window.addEventListener('touchmove',  e => move(e.touches[0].clientX), { passive: true });
+  window.addEventListener('mouseup',  end);
+  window.addEventListener('touchend', end);
+}
+
 function checkPin(who) {
   if (who === 'nadeska') {
     const pin = getPin('n', 4);
@@ -1618,6 +1907,8 @@ function checkPin(who) {
     } else {
       startIdleTimer('nadeska');
       shakeBoxes('n', 4);
+      const sw = document.getElementById('swipe-nadeska');
+      if (sw && sw._resetSwipe) sw._resetSwipe();
       triggerVannacci();
     }
   } else {
@@ -1633,6 +1924,8 @@ function checkPin(who) {
     } else {
       startIdleTimer('franceska');
       shakeBoxes('f', 4);
+      const sw = document.getElementById('swipe-franceska');
+      if (sw && sw._resetSwipe) sw._resetSwipe();
       triggerVannacci();
     }
   }
@@ -1704,7 +1997,7 @@ function triggerVannacci(customMsg, onDismiss) {
   vannacciActive = true;
   vannacciCount++;
   vannacciCanDismiss = false;
-  setTimeout(() => { vannacciCanDismiss = true; }, 2000);
+  setTimeout(() => { vannacciCanDismiss = true; }, 1500);
   vannacciDismissCallback = onDismiss || null;
 
   document.getElementById(currentBgAudioId).volume = 0.05;
@@ -1763,6 +2056,11 @@ function dismissVannacci() {
   vannacciActive = false;
   document.getElementById(currentBgAudioId).volume = 0.2;
   if (vannacciDismissCallback) { vannacciDismissCallback(); vannacciDismissCallback = null; }
+  // Reset any swipe sliders that may be stuck
+  ['nadeska','franceska'].forEach(id => {
+    const el = document.getElementById('swipe-' + id);
+    if (el && el._resetSwipe) el._resetSwipe();
+  });
   // Restart idle timer on the active screen
   if (currentScreen === 'nadeska-unlock') startIdleTimer('nadeska');
   if (currentScreen === 'franceska-unlock') startIdleTimer('franceska');
@@ -1918,87 +2216,602 @@ async function doConfirm() {
   const dayList = days.map(d => dayNames[d]).join(', ');
   _waBaseMsg = `🗳️ Voto di ${currentUser.charAt(0).toUpperCase()+currentUser.slice(1)}:\nGiorni scelti: ${dayList} 🍕`;
 
-  switchToBgAudio('napule-audio', 0.3);
+  switchToBgAudio('tetris-audio', 0.3);
   goTo('scratch');
 }
 
-// ─── SCRATCH CARD ────────────────────────────────────────────────────────────
+// ─── FIGHT GAME ──────────────────────────────────────────────────────────────
+let _fightRaf = null;
+
 function initScratchCard() {
-  const canvas = document.getElementById('scratch-canvas');
-  const ctx = canvas.getContext('2d');
-  const wrap = canvas.parentElement;
+  if (_fightRaf) { cancelAnimationFrame(_fightRaf); _fightRaf = null; }
 
-  // Match canvas resolution to display size
-  canvas.width  = wrap.offsetWidth;
-  canvas.height = wrap.offsetHeight;
+  const canvas = document.getElementById('fight-canvas');
+  const ctx    = canvas.getContext('2d');
+  const W = 480, H = 300;
+  canvas.width  = W;
+  canvas.height = H;
 
-  // Silver scratch surface
-  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  grad.addColorStop(0,   '#b0b0b0');
-  grad.addColorStop(0.4, '#d8d8d8');
-  grad.addColorStop(0.7, '#c0c0c0');
-  grad.addColorStop(1,   '#a0a0a0');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const pName = currentUser.charAt(0).toUpperCase() + currentUser.slice(1);
+  document.getElementById('fight-player-name').textContent = pName.toUpperCase();
+  document.getElementById('fight-enemy-name').textContent =
+    currentUser === 'franceska' ? 'VOLDEMORT (aka poltiglia)' : 'USAvAGIINA';
+  document.getElementById('enemy-hp-fill').style.width  = '100%';
+  document.getElementById('player-hp-fill').style.width = '100%';
+  document.getElementById('fight-combo').textContent    = '';
+  document.getElementById('fight-hint').textContent     = '';
+  document.getElementById('fight-intro').style.display  = 'flex';
 
-  // Repeating pattern text on top
-  ctx.fillStyle = 'rgba(80,80,80,0.25)';
-  ctx.font = 'bold 11px monospace';
-  for (let y = 18; y < canvas.height + 14; y += 18) {
-    for (let x = -10; x < canvas.width; x += 72) {
-      ctx.fillText('✦ GRATTA ✦', x, y);
+  const avatarImg = new Image();
+  avatarImg.src = currentUser === 'franceska' ? 'images/franceska.jpeg' : 'images/nadeska.jpeg';
+
+  const PX = 125,       GY = H - 36;  // player center X (left), ground Y
+  const EX = W - 125;                 // enemy center X (right)
+
+  let enemyHp      = 200;
+  let playerHp     = 100;
+  let done         = false;
+  let gameStarted  = false;
+  let punchAnim    = 0;   // 16→0
+  let hitAnim      = 0;   // 14→0  (squish)
+  let playerHitAnim = 0;   // 12→0  (player squish on counter)
+  let enemyPunchAnim= 0;   // 16→0  (enemy counter punch arm)
+  let effects      = [];
+  let combo        = 0;
+  let lastHitMs          = 0;
+  let lastHitOnPlayerMs  = 0;
+  let comboTmr     = null;
+  let frameN       = 0;
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  // ── FIST POSITION (overhead arc trajectory) ────────────────────────────────
+  // punchAnim 16→9 = wind-up arc from player shoulder to above enemy
+  // punchAnim  8→1 = strike: fist descends straight onto enemy head
+  function getFist() {
+    if (punchAnim <= 0) return null;
+    if (punchAnim >= 9) {
+      const t = (16 - punchAnim) / 7;
+      const arcLift = 70 * Math.sin(t * Math.PI);
+      return {
+        x: lerp(PX + 30, EX, t),
+        y: lerp(GY - 82, GY - 165, t) - arcLift,
+        s: 16,
+      };
+    } else {
+      const t = (8 - punchAnim) / 7;
+      return {
+        x: EX,
+        y: lerp(GY - 165, GY - 118, t),  // atterra sulla testa più grande
+        s: 16 + t * 10,
+      };
     }
   }
 
-  let scratching = false;
-  let advanced = false;
-  let checkCounter = 0;
-
-  function getRealPercent() {
-    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    let transparent = 0;
-    // campiona 1 pixel ogni 16 per performance
-    for (let i = 3; i < data.length; i += 4 * 16) {
-      if (data[i] < 128) transparent++;
+  // ── ENEMY FIST (counter arc: enemy right→player left) ─────────────────────
+  function getEnemyFist() {
+    if (enemyPunchAnim <= 0) return null;
+    if (enemyPunchAnim >= 9) {
+      const t = (16 - enemyPunchAnim) / 7;
+      const arcLift = 60 * Math.sin(t * Math.PI);
+      return { x: lerp(EX - 30, PX, t), y: lerp(GY - 82, GY - 155, t) - arcLift, s: 14 };
+    } else {
+      const t = (8 - enemyPunchAnim) / 7;
+      return { x: PX, y: lerp(GY - 155, GY - 110, t), s: 14 + t * 8 };
     }
-    return transparent / (data.length / 4 / 16);
   }
 
-  function scratchAt(x, y) {
-    ctx.globalCompositeOperation = 'destination-out';
+  function drawEnemyCounterFist() {
+    const eFist = getEnemyFist();
+    if (!eFist) return;
+    ctx.strokeStyle = '#3a1111';
+    ctx.lineWidth   = 13;
+    ctx.lineCap     = 'round';
     ctx.beginPath();
-    ctx.arc(x, y, 26, 0, Math.PI * 2);
-    ctx.fill();
-    if (advanced) return;
-    // controlla ogni 8 eventi per non pesare troppo
-    checkCounter++;
-    if (checkCounter % 8 === 0) {
-      if (getRealPercent() >= 0.80) {
-        advanced = true;
-        canvas.style.pointerEvents = 'none';
-        setTimeout(() => showPrizeCloud(), 500);
+    ctx.moveTo(EX - 26, GY - 82);
+    ctx.lineTo(eFist.x, eFist.y);
+    ctx.stroke();
+    const ehs = eFist.s / 2;
+    ctx.fillStyle = '#bb8888';
+    ctx.fillRect(eFist.x - ehs, eFist.y - ehs, eFist.s, eFist.s);
+    if (enemyPunchAnim <= 4 && enemyPunchAnim >= 1) {
+      ctx.fillStyle = 'rgba(255,80,80,0.4)';
+      ctx.beginPath();
+      ctx.arc(eFist.x, eFist.y, 26, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // ── BACKGROUND ─────────────────────────────────────────────────────────────
+  function drawBg() {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+    // subtle grid lines for arena feel
+    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx < W; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
+    for (let gy = 0; gy < H; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+    // ground line
+    ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, H - 30); ctx.lineTo(W, H - 30); ctx.stroke();
+    ctx.fillStyle = '#1c0c0c';
+    ctx.fillRect(0, GY, W, H - GY);
+    ctx.fillStyle = '#261010';
+    for (let x = 0; x < W; x += 32) ctx.fillRect(x, GY, 1, H - GY);
+    ctx.fillStyle = '#2e1414';
+    ctx.fillRect(0, GY, W, 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.13)';
+    for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 2);
+    ctx.fillStyle = 'rgba(255,30,30,0.04)';
+    ctx.font = 'bold 72px monospace';
+    ctx.fillText('NAPOLI', 50, 200);
+  }
+
+  // ── ENEMY (with squish transform on hit) ───────────────────────────────────
+  function drawEnemy() {
+    const squishT = hitAnim / 14;
+    const hx      = hitAnim > 0 ? (Math.random() * 10 - 5) : 0;
+    const x       = EX + hx;
+    const scaleY  = 1 - 0.30 * squishT;
+    const scaleX  = 1 + 0.18 * squishT;
+    const isVold  = currentUser === 'franceska';
+
+    const skin  = hitAnim > 0 ? '#e8bbbb' : '#bb8888';
+    const shirt = hitAnim > 0 ? '#882222' : '#3a1111';
+    const hair  = hitAnim > 0 ? '#3a2210' : '#241408';
+
+    ctx.save();
+    ctx.translate(x, GY);
+    ctx.scale(scaleX, scaleY);
+    ctx.translate(-x, -GY);
+
+    // Feet
+    ctx.fillStyle = '#0e0e0e';
+    ctx.fillRect(x - 22, GY - 10, 18, 10);
+    ctx.fillRect(x + 4,  GY - 10, 20, 10);
+    // Legs
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(x - 20, GY - 46, 15, 36);
+    ctx.fillRect(x + 5,  GY - 46, 15, 36);
+    // Body
+    ctx.fillStyle = shirt;
+    ctx.fillRect(x - 26, GY - 92, 52, 46);
+    // Arms (fighting stance — fists raised)
+    ctx.fillStyle = shirt;
+    // left arm hidden when throwing counter punch (replaced by arc animation)
+    if (enemyPunchAnim <= 0) ctx.fillRect(x - 48, GY - 90, 24, 16);
+    ctx.fillRect(x + 24, GY - 90, 24, 16);
+    // Fists
+    ctx.fillStyle = hitAnim > 0 ? '#c06060' : '#8b2222';
+    if (enemyPunchAnim <= 0) ctx.fillRect(x - 54, GY - 93, 16, 16);
+    ctx.fillRect(x + 38, GY - 93, 16, 16);
+
+    // ── HEAD BASE (54×44, più grande) ─────────────────────────────────────
+    ctx.fillStyle = skin;
+    ctx.fillRect(x - 27, GY - 134, 54, 44);
+
+    if (isVold) {
+      // ── VOLDEMORT: buzz cut rasato, tempie vuote, occhiali tondi, barba ─
+
+      // Capelli rasati (buzz cut) solo nella zona centrale-alta (escluse le tempie)
+      ctx.fillStyle = hair;
+      for (let si = 0; si < 34; si += 3) {
+        for (let sj = 0; sj < 10; sj += 3) {
+          if ((si + sj) % 6 < 3) ctx.fillRect(x - 17 + si, GY - 134 + sj, 2, 2);
+        }
+      }
+      // Basette corti sotto le tempie vuote
+      ctx.fillRect(x - 27, GY - 122, 4, 16);
+      ctx.fillRect(x + 23, GY - 122, 4, 16);
+
+      // Sopracciglia villain: esterne alte → scendono verso il centro
+      for (let i = 0; i < 5; i++) {
+        ctx.fillRect(x - 22 + i * 2, GY - 129 + i, 7, 2);
+        ctx.fillRect(x + 15 - i * 2, GY - 129 + i, 7, 2);
+      }
+
+      // Occhi (dentro le lenti degli occhiali)
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x - 19, GY - 120, 13, 8);
+      ctx.fillRect(x +  6, GY - 120, 13, 8);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x - 16, GY - 118,  6, 6);
+      ctx.fillRect(x +  9, GY - 118,  6, 6);
+
+      // Occhiali tondi (arc) — montatura grigio-verde come nel modello
+      ctx.strokeStyle = hitAnim > 0 ? '#aaaaaa' : '#778866';
+      ctx.lineWidth   = 2.5;
+      ctx.beginPath(); ctx.arc(x - 12, GY - 116, 10, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x + 12, GY - 116, 10, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - 2, GY - 116); ctx.lineTo(x + 2, GY - 116); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - 22, GY - 116); ctx.lineTo(x - 27, GY - 112); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + 22, GY - 116); ctx.lineTo(x + 27, GY - 112); ctx.stroke();
+      ctx.lineWidth = 1;
+
+      // Barba cortissima (stubble deterministico — no flickering)
+      ctx.fillStyle = hitAnim > 0 ? '#6b3322' : '#2e1808';
+      for (let si = 0; si < 50; si += 3) {
+        for (let sj = 0; sj < 20; sj += 3) {
+          if ((si * 3 + sj * 7) % 9 < 4) ctx.fillRect(x - 25 + si, GY - 112 + sj, 2, 2);
+        }
+      }
+
+      // Bocca: smirk villain (sx più alto, dx più basso)
+      ctx.fillStyle = '#000';
+      if (hitAnim > 0) {
+        ctx.fillRect(x - 10, GY - 101, 20, 10);
+        ctx.fillStyle = skin;
+        ctx.fillRect(x -  7, GY -  99, 14,  6);
+      } else {
+        ctx.fillRect(x - 10, GY - 101,  8, 2);
+        ctx.fillRect(x -  2, GY -  99, 12, 2);
+        ctx.fillRect(x - 10, GY - 101,  2, 4);
+      }
+
+    } else {
+      // ── USAvAGIINA: donna cicciottella, capelli lunghi neri ───────────────
+
+      const hairCol = hitAnim > 0 ? '#3a2210' : '#0a0808';
+
+      // Redraw body wider/chubbier (overwrites slim one drawn above)
+      ctx.fillStyle = shirt;
+      ctx.fillRect(x - 33, GY - 92, 66, 50);
+      ctx.fillRect(x - 38, GY - 58, 76, 18);   // wide hips flare
+      // Redraw legs wider
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(x - 26, GY - 46, 19, 36);
+      ctx.fillRect(x + 7,  GY - 46, 19, 36);
+      // Redraw feet wider
+      ctx.fillStyle = '#0e0e0e';
+      ctx.fillRect(x - 27, GY - 10, 23, 10);
+      ctx.fillRect(x + 4,  GY - 10, 25, 10);
+      // Redraw arms wider (covers original slim arms)
+      ctx.fillStyle = shirt;
+      if (enemyPunchAnim <= 0) ctx.fillRect(x - 58, GY - 90, 32, 18);
+      ctx.fillRect(x + 26, GY - 90, 32, 18);
+      // Redraw fists
+      ctx.fillStyle = hitAnim > 0 ? '#c06060' : '#8b2222';
+      if (enemyPunchAnim <= 0) ctx.fillRect(x - 64, GY - 93, 18, 18);
+      ctx.fillRect(x + 46, GY - 93, 18, 18);
+
+      // Sopracciglia nere arcuate verso il basso (arrabbiate)
+      ctx.fillStyle = hairCol;
+      ctx.fillRect(x - 22, GY - 133, 18, 3);
+      ctx.fillRect(x + 4,  GY - 133, 18, 3);
+      ctx.fillRect(x - 22, GY - 136,  8, 3);
+      ctx.fillRect(x + 14, GY - 136,  8, 3);
+
+      // Occhi
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x - 20, GY - 126, 14, 10);
+      ctx.fillRect(x +  6, GY - 126, 14, 10);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x - 17, GY - 124,  7,  7);
+      ctx.fillRect(x + 10, GY - 124,  7,  7);
+
+      // Bocca: smorfia
+      ctx.fillStyle = '#000';
+      if (hitAnim > 0) {
+        ctx.fillRect(x - 10, GY - 106, 20, 10);
+        ctx.fillStyle = skin;
+        ctx.fillRect(x -  7, GY - 104, 14,  6);
+      } else {
+        ctx.fillRect(x - 10, GY - 105, 20, 3);
+      }
+
+      // ── Capelli lunghi neri (disegnati ultimi, sopra tutto) ───────────────
+      ctx.fillStyle = hairCol;
+      // Ciuffo in cima alla testa
+      ctx.fillRect(x - 30, GY - 148, 60, 16);
+      // Ciocca sinistra lunga fino a metà busto
+      ctx.fillRect(x - 42, GY - 144, 15, 85);
+      ctx.fillRect(x - 44, GY - 76,  17, 28);  // lieve svasatura in fondo
+      // Ciocca destra lunga
+      ctx.fillRect(x + 27, GY - 144, 15, 85);
+      ctx.fillRect(x + 27, GY - 76,  17, 28);
+    }
+
+    ctx.restore();
+  }
+
+  // ── PLAYER ─────────────────────────────────────────────────────────────────
+  function drawPlayer() {
+    const fist  = getFist();
+    const x     = PX;
+    const bobY  = gameStarted ? 0 : Math.sin(frameN * 0.07) * 3;
+
+    // Squish when hit by counter
+    const pHitT = playerHitAnim / 12;
+    if (playerHitAnim > 0) {
+      ctx.save();
+      ctx.translate(x, GY);
+      ctx.scale(1 + pHitT * 0.35, 1 - pHitT * 0.25);
+      ctx.translate(-x, -GY);
+    }
+
+    // Feet
+    ctx.fillStyle = '#0e0e0e';
+    ctx.fillRect(x - 20, GY - 10 + bobY, 18, 10);
+    ctx.fillRect(x + 2,  GY - 10 + bobY, 18, 10);
+    // Legs
+    ctx.fillStyle = '#0a1a44';
+    ctx.fillRect(x - 19, GY - 46 + bobY, 15, 36);
+    ctx.fillRect(x + 4,  GY - 46 + bobY, 15, 36);
+    // Body
+    ctx.fillStyle = '#1133aa';
+    ctx.fillRect(x - 26, GY - 92 + bobY, 52, 46);
+
+    // Punch arm + fist (drawn before head so head overlaps)
+    if (fist) {
+      ctx.strokeStyle = '#1133aa';
+      ctx.lineWidth   = 14;
+      ctx.lineCap     = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x + 22, GY - 82 + bobY);   // right shoulder (player faces right)
+      ctx.lineTo(fist.x, fist.y);
+      ctx.stroke();
+      // Fist
+      const hs = fist.s / 2;
+      ctx.fillStyle = '#ffcc66';
+      ctx.fillRect(fist.x - hs, fist.y - hs, fist.s, fist.s);
+      // Impact flash when fist reaches the head
+      if (punchAnim <= 4 && punchAnim >= 1) {
+        ctx.fillStyle = 'rgba(255,220,80,0.35)';
+        ctx.beginPath();
+        ctx.arc(fist.x, fist.y, 28, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      // Idle arms
+      ctx.fillStyle = '#1133aa';
+      ctx.fillRect(x - 42, GY - 90 + bobY, 18, 14);
+      ctx.fillRect(x + 24, GY - 90 + bobY, 18, 14);
+    }
+
+    // Head (clipped avatar photo)
+    const hy = GY - 130 + bobY;
+    const hr = 26;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, hy, hr, 0, Math.PI * 2);
+    ctx.clip();
+    if (avatarImg.complete && avatarImg.naturalWidth > 0) {
+      ctx.drawImage(avatarImg, x - hr, hy - hr, hr * 2, hr * 2);
+    } else {
+      ctx.fillStyle = '#ffcc66';
+      ctx.fillRect(x - hr, hy - hr, hr * 2, hr * 2);
+    }
+    ctx.restore();
+    ctx.strokeStyle = '#ffcc66';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.arc(x, hy, hr, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (playerHitAnim > 0) {
+      // Red flash overlay
+      ctx.fillStyle = 'rgba(255,0,0,0.18)';
+      ctx.fillRect(x - 42, GY - 140, 84, 140);
+      ctx.restore();
+    }
+  }
+
+  // ── EFFECTS ────────────────────────────────────────────────────────────────
+  function drawEffects() {
+    effects = effects.filter(e => e.alpha > 0);
+    effects.forEach(e => {
+      ctx.save();
+      ctx.globalAlpha = e.alpha;
+      ctx.font        = 'bold ' + (e.size | 0) + 'px monospace';
+      ctx.fillStyle   = e.color;
+      ctx.fillText(e.text, e.x, e.y);
+      ctx.restore();
+      e.x     += (e.vx || 0);
+      e.y     += (e.vy !== undefined ? e.vy : -2.2);
+      if (e.vx !== undefined) e.vy += 0.08; // gravità leggera sulle stelle
+      e.alpha -= (e.fade || 0.025);
+    });
+  }
+
+  // ── GAME LOOP ───────────────────────────────────────────────────────────────
+  function loop() {
+    frameN++;
+    drawBg();
+    drawEnemy();
+    drawPlayer();
+    drawEnemyCounterFist();  // dopo player: il pugno del nemico si vede sopra tutto
+    drawEffects();
+    if (punchAnim     > 0) punchAnim--;
+    if (hitAnim       > 0) hitAnim--;
+    if (playerHitAnim > 0) playerHitAnim--;
+    if (enemyPunchAnim> 0) enemyPunchAnim--;
+    // HP regen — kicks in after 300ms idle, +3 HP every 2 frames
+    if (gameStarted && !done && enemyHp > 0 && enemyHp < 200) {
+      if (Date.now() - lastHitMs > 300 && frameN % 2 === 0) {
+        enemyHp = Math.min(200, enemyHp + 3);
+        document.getElementById('enemy-hp-fill').style.width = (enemyHp / 2) + '%';
+        const hEl = document.getElementById('fight-hint');
+        if (!hEl.textContent.startsWith('STA')) hEl.textContent = 'STA RECUPERANDO! PICCHIA! 😤';
       }
     }
+    // Player HP regen — slow, kicks in after 2s without being hit, +1 every 4 frames
+    if (gameStarted && !done && playerHp > 5 && playerHp < 100) {
+      if (Date.now() - lastHitOnPlayerMs > 2000 && frameN % 4 === 0) {
+        playerHp = Math.min(100, playerHp + 1);
+        document.getElementById('player-hp-fill').style.width = playerHp + '%';
+      }
+    }
+    if (!done) _fightRaf = requestAnimationFrame(loop);
   }
 
-  function pos(e) {
-    const r = canvas.getBoundingClientRect();
-    const src = e.touches ? e.touches[0] : e;
-    return [src.clientX - r.left, src.clientY - r.top];
+  // ── PUNCH ──────────────────────────────────────────────────────────────────
+  function punch() {
+    if (done || !gameStarted) return;
+    if (punchAnim >= 9) return;      // still in wind-up, don't interrupt
+
+    const now = Date.now();
+    combo     = (now - lastHitMs < 700) ? combo + 1 : 1;
+    lastHitMs = now;
+
+    if (comboTmr) clearTimeout(comboTmr);
+    comboTmr = setTimeout(() => { combo = 0; }, 850);
+
+    const dmg = combo >= 5 ? 10 : combo >= 3 ? 7 : combo >= 2 ? 5 : 3;
+    enemyHp   = Math.max(0, enemyHp - dmg);
+    document.getElementById('enemy-hp-fill').style.width = (enemyHp / 2) + '%';
+
+    punchAnim = 16;
+    hitAnim   = 14;
+    playCoinSound();
+
+    const hitWords = ['POW!','BAM!','OOF!','CRACK!','SMASH!','CRUNCH!'];
+    const bigWords = ['COMBO!!','SUPER!!','ULTRA!!','GODLIKE!!'];
+    effects.push({
+      text  : combo >= 5 ? bigWords[Math.min(combo - 5, 3)] : hitWords[combo % hitWords.length],
+      x     : EX - 20 + Math.random() * 40,
+      y     : GY - 185 - Math.random() * 20,
+      alpha : 1,
+      color : combo >= 5 ? '#cc0000' : combo >= 3 ? '#e0a000' : '#222',
+      size  : 28 + dmg,
+      vy    : -1.5,
+      fade  : 0.025,
+    });
+    // Player speech when punching
+    const punchSpeech = currentUser === 'nadeska'
+      ? ['vaffff', 'TI AMMAZZO!', 'STRONZETTAAA']
+      : ['vaffff', 'TI AMMAZZO!', 'POLTIGLIAAA'];
+    effects.push({
+      text  : punchSpeech[Math.floor(Math.random() * punchSpeech.length)],
+      x     : PX + 10 + Math.random() * 20,
+      y     : GY - 175,
+      alpha : 1,
+      color : '#1133aa',
+      size  : 20,
+      vy    : -1.8,
+      fade  : 0.03,
+    });
+    // Stelle radiali esplosive dalla testa del nemico
+    const headCY = GY - 112;
+    const starColors = ['#ffd700','#e50914','#0088cc','#ff8800','#cc44aa'];
+    const starChars  = ['★','✦','☆','✶'];
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.4;
+      const speed = 2 + Math.random() * 3;
+      effects.push({
+        text : starChars[i % starChars.length],
+        x    : EX + (Math.random() - 0.5) * 14,
+        y    : headCY + (Math.random() - 0.5) * 14,
+        vx   : Math.cos(angle) * speed,
+        vy   : Math.sin(angle) * speed - 0.8,
+        alpha: 1,
+        color: starColors[i % starColors.length],
+        size : 11 + Math.random() * 13,
+        fade : 0.03 + Math.random() * 0.02,
+      });
+    }
+
+    const comboEl = document.getElementById('fight-combo');
+    comboEl.textContent = combo >= 2
+      ? (combo >= 5 ? '★ ' + combo + ' COMBO!! ★' : combo + ' COMBO!!')
+      : '';
+
+    if (enemyHp <= 0) {
+      done = true;
+      cancelAnimationFrame(_fightRaf); _fightRaf = null;
+      drawBg(); drawEnemy(); drawPlayer(); drawEffects();
+      document.getElementById('fight-combo').textContent = '★  K.O.  ★';
+      document.getElementById('fight-hint').textContent  = '🏆 VITTORIA! 🏆';
+      setTimeout(() => showPrizeCloud(), 1400);
+      return;
+    }
+
+    const hintEl = document.getElementById('fight-hint');
+    if      (enemyHp < 40)  hintEl.textContent = 'QUASI KO!! DAIII! 🔥';
+    else if (enemyHp < 100) hintEl.textContent = 'OTTIMO! NON FERMARTI! 💪';
+    else if (combo >= 3)   hintEl.textContent = 'COMBO! INCREDIBILE!! 🌟';
+    else                   hintEl.textContent = 'PICCHIA! PICCHIA! 👊';
+
+    // Enemy counter-attack: 45% chance, delayed 300-550ms
+    if (Math.random() < 0.45) {
+      setTimeout(enemyCounter, 300 + Math.random() * 250);
+    }
   }
 
-  canvas.addEventListener('mousedown',  e => { scratching = true; scratchAt(...pos(e)); });
-  canvas.addEventListener('mousemove',  e => { if (scratching) scratchAt(...pos(e)); });
-  canvas.addEventListener('mouseup',    () => { scratching = false; });
-  canvas.addEventListener('touchstart', e => { e.preventDefault(); scratching = true;  scratchAt(...pos(e)); }, {passive:false});
-  canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (scratching) scratchAt(...pos(e)); },   {passive:false});
-  canvas.addEventListener('touchend',   () => { scratching = false; });
+  // ── ENEMY COUNTER ──────────────────────────────────────────────────────────
+  function enemyCounter() {
+    if (done || !gameStarted) return;
+    const dmg = 3 + Math.floor(Math.random() * 5);   // 3-7 damage, can't kill
+    playerHp  = Math.max(5, playerHp - dmg);
+    document.getElementById('player-hp-fill').style.width = playerHp + '%';
+    playerHitAnim      = 12;
+    enemyPunchAnim     = 16;
+    lastHitOnPlayerMs  = Date.now();
+
+    const counterWords = [''];
+    effects.push({
+      text  : counterWords[Math.floor(Math.random() * counterWords.length)],
+      x     : PX - 20 + Math.random() * 40,
+      y     : GY - 185 - Math.random() * 15,
+      alpha : 1,
+      color : '#cc0000',
+      size  : 18,
+      vy    : -1.5,
+      fade  : 0.025,
+    });
+    effects.push({
+      text  : '-' + dmg,
+      x     : PX + Math.random() * 20,
+      y     : GY - 165,
+      alpha : 1,
+      color : '#ff2222',
+      size  : 24,
+      vy    : -2,
+      fade  : 0.03,
+    });
+    // Player speech when hit
+    const hitSpeech = currentUser === 'nadeska'
+      ? ['zokkola', 'infameee', 'STRONZETTAAA']
+      : ['zokkolo', 'infameee', 'POLTIGLIAAA'];
+    effects.push({
+      text  : hitSpeech[Math.floor(Math.random() * hitSpeech.length)],
+      x     : PX - 10 + Math.random() * 20,
+      y     : GY - 200,
+      alpha : 1,
+      color : '#884400',
+      size  : 22,
+      vy    : -1.8,
+      fade  : 0.028,
+    });
+  }
+
+  // ── START BUTTON ───────────────────────────────────────────────────────────
+  document.getElementById('fight-start-btn').addEventListener('click', () => {
+    document.getElementById('fight-intro').style.display = 'none';
+    document.getElementById('fight-hint').textContent    = 'PICCHIA IL TIPO! 👊';
+    gameStarted = true;
+  });
+
+  canvas.addEventListener('click',      () => punch());
+  canvas.addEventListener('touchstart', e  => { e.preventDefault(); punch(); }, { passive: false });
+
+  _fightRaf = requestAnimationFrame(loop);
 }
 
 // ─── FINAL TEXT: HANDWRITING ANIMATION ───────────────────────────────────────
 function animateFinalText() {
-  const el  = document.getElementById('final-text');
-  const sub = document.getElementById('final-subtext');
+  const el    = document.getElementById('final-text');
+  const sub   = document.getElementById('final-subtext');
+  const photo = document.querySelector('#screen-final .final-photo');
+
+  if (currentUser === 'franceska') {
+    el.textContent = 'finalmente basta pizza viva <3';
+    if (photo) photo.src = 'images/pizza.jpg';
+  } else {
+    el.textContent = 'Grazie... menomale che a te piace la pizza nabboletana ❤️';
+    if (photo) photo.src = 'images/img.png';
+  }
+
   const text = el.textContent.trim();
 
   el.innerHTML = '';
@@ -2006,8 +2819,8 @@ function animateFinalText() {
 
   [...text].forEach((char, i) => {
     const span = document.createElement('span');
-    span.textContent = char === ' ' ? '\u00a0' : char;
-    span.style.cssText = `display:inline-block; opacity:0;
+    span.textContent = char;
+    span.style.cssText = `display:inline; opacity:0;
       animation:fadeInChar 0.07s ease ${0.4 + i * 0.045}s forwards;`;
     el.appendChild(span);
   });
@@ -2191,10 +3004,17 @@ function spinWheel() {
       }
 
       setTimeout(() => {
-        const prize = _wheelSegs[winner].full;
+        // On retry spin: if 👎 landed, silently pick a random real prize instead
+        let actualWinner = winner;
+        if (_wheelRetryUsed && _wheelSegs[winner].lines.includes('👎')) {
+          const validIdxs = _wheelSegs.map((s, i) => i).filter(i => !_wheelSegs[i].lines.includes('👎'));
+          actualWinner = validIdxs[Math.floor(Math.random() * validIdxs.length)];
+        }
+        const prize = _wheelSegs[actualWinner].full;
 
         // Completa il link WhatsApp con il premio reale della ruota
-        const fullMsg = _waBaseMsg + '\n\nIn omaggio per te: ' + prize;
+        const userName = currentUser.charAt(0).toUpperCase() + currentUser.slice(1);
+        const fullMsg = _waBaseMsg + '\n\nIn omaggio per te: ' + prize + '\n\nLa sottoscritta ' + userName + ' dichiara di accettare il versamento della quota di partecipazione di 25/30€ a papino';
         const waUrl   = 'https://wa.me/393892194876?text=' + encodeURIComponent(fullMsg);
         document.getElementById('wa-btn').href       = waUrl;
         document.getElementById('wa-photo-btn').href = waUrl;
@@ -2223,6 +3043,46 @@ function confirmRetry() {
 }
 function dismissRetry() {
   document.getElementById('wheel-confirm-popup').style.display = 'none';
+}
+
+// ─── SLOT TONGUE ─────────────────────────────────────────────────────────────
+function triggerSlotTongue() {
+  const cab   = document.getElementById('lever-wrap');
+  const mouth = document.getElementById('slot-mouth');
+  if (!mouth || !cab) return;
+  const cabRect   = cab.getBoundingClientRect();
+  const mouthRect = mouth.getBoundingClientRect();
+  const originX   = mouthRect.left - cabRect.left + mouthRect.width / 2;
+  const originY   = mouthRect.top  - cabRect.top  + mouthRect.height * 0.4;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'slot-tongue-wrap';
+  wrap.style.cssText = `left:${originX}px; top:${originY}px; transform:translateX(-50%);`;
+
+  const inner = document.createElement('div');
+  inner.className = 'slot-tongue-inner';
+  inner.innerHTML = `<svg viewBox="0 0 60 86" xmlns="http://www.w3.org/2000/svg" width="100%" height="86" style="display:block">
+    <defs>
+      <linearGradient id="tgSide" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%"   stop-color="#c0183a"/>
+        <stop offset="30%"  stop-color="#ff6080"/>
+        <stop offset="50%"  stop-color="#ffaabb"/>
+        <stop offset="70%"  stop-color="#ff6080"/>
+        <stop offset="100%" stop-color="#c0183a"/>
+      </linearGradient>
+    </defs>
+    <!-- Corpo lingua: larga in cima, si stringe e si chiude in curva tonda in fondo -->
+    <path d="M4,0 L56,0 Q63,26 56,54 Q48,76 30,82 Q12,76 4,54 Q-3,26 4,0 Z" fill="url(#tgSide)"/>
+    <!-- Lucentezza sinistra -->
+    <path d="M12,2 Q19,3 21,6 Q19,34 16,58 Q13,34 11,6 Z" fill="rgba(255,255,255,0.28)"/>
+    <!-- Solco centrale -->
+    <path d="M30,0 Q29,36 30,80" stroke="#a01028" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.55"/>
+  </svg>`;
+
+  wrap.appendChild(inner);
+  cab.appendChild(wrap);
+  // remove when the reveal animation ends (longer of the two)
+  wrap.addEventListener('animationend', () => wrap.remove(), { once: true });
 }
 
 // ─── SLOT EXPLOSION ──────────────────────────────────────────────────────────
