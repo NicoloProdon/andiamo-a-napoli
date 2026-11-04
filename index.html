@@ -824,7 +824,7 @@
   }
   @keyframes fightBlink { 50%{opacity:0.3} }
   .fight-hud {
-    display:flex; width:100%; gap:6px; align-items:center;
+    display:flex; width:100%; gap:6px; align-items:flex-end;
   }
   .fight-hud-side { flex:1; display:flex; flex-direction:column; gap:3px; }
   .fight-hud-side.right { align-items:flex-end; }
@@ -1767,7 +1767,7 @@ function setupPinBoxes(prefix, count) {
   const who = prefix === 'n' ? 'nadeska' : 'franceska';
   for (let i = 0; i < count; i++) {
     const box = document.getElementById(prefix + i);
-    box.addEventListener('focus', () => startIdleTimer(who));
+    box.addEventListener('focus', (e) => { startIdleTimer(who); e.target.select(); });
     box.addEventListener('input', (e) => {
       startIdleTimer(who);
       const val = e.target.value.toUpperCase().replace(/[^A-Z]/g,'');
