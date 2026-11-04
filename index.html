@@ -737,6 +737,17 @@
   }
   .cal-confirm-btn.ready:hover { background:#f40612; transform:scale(1.03); }
   .cal-confirm-btn.ready:active { transform:scale(0.96); }
+  .cal-confirm-btn.loading {
+    opacity:0.7; pointer-events:none; cursor:default;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  @keyframes btnSpin { to { transform:rotate(360deg); } }
+  .btn-spinner {
+    display:none; width:18px; height:18px; border-radius:50%;
+    border:3px solid rgba(255,255,255,0.3); border-top-color:#fff;
+    animation:btnSpin 0.7s linear infinite; flex-shrink:0;
+  }
+  .cal-confirm-btn.loading .btn-spinner { display:inline-block; }
   .cal-selected-label {
     font-size:clamp(16px,4.5vw,20px);
     color:#aaa;
@@ -1321,7 +1332,7 @@
     <p class="cal-month">Novembre 2026</p>
     <div class="cal-grid" id="cal-grid"></div>
     <p class="cal-selected-label" id="cal-selected-label">Nessun giorno selezionato</p>
-    <button class="cal-confirm-btn" id="cal-confirm-btn" onclick="confirmCalendar()">Conferma</button>
+    <button class="cal-confirm-btn" id="cal-confirm-btn" onclick="confirmCalendar()"><span class="btn-spinner"></span>Conferma</button>
   </div>
 </div>
 
@@ -2199,25 +2210,33 @@ async function confirmCalendar() {
 }
 
 async function doConfirm() {
+  const btn = document.getElementById('cal-confirm-btn');
+  btn.classList.add('loading');
+
   const days = [...calSelectedDays].sort((a, b) => a - b);
   const sb = getSbClient();
-  const { data: existing } = await sb.from('Votes').select('id').eq('name', currentUser).maybeSingle();
-  if (existing) {
-    await sb.from('Votes').update({ days }).eq('id', existing.id);
-  } else {
-    await sb.from('Votes').insert({ name: currentUser, days });
+  try {
+    const { data: existing } = await sb.from('Votes').select('id').eq('name', currentUser).maybeSingle();
+    if (existing) {
+      await sb.from('Votes').update({ days }).eq('id', existing.id);
+    } else {
+      await sb.from('Votes').insert({ name: currentUser, days });
+    }
+
+    // Salva il messaggio base — il premio verrà aggiunto dopo la ruota
+    const dayNames = ['','1 Nov','2 Nov','3 Nov','4 Nov','5 Nov','6 Nov','7 Nov',
+      '8 Nov','9 Nov','10 Nov','11 Nov','12 Nov','13 Nov','14 Nov','15 Nov',
+      '16 Nov','17 Nov','18 Nov','19 Nov','20 Nov','21 Nov','22 Nov','23 Nov',
+      '24 Nov','25 Nov','26 Nov','27 Nov','28 Nov','29 Nov','30 Nov'];
+    const dayList = days.map(d => dayNames[d]).join(', ');
+    _waBaseMsg = `🗳️ Voto di ${currentUser.charAt(0).toUpperCase()+currentUser.slice(1)}:\nGiorni scelti: ${dayList} 🍕`;
+
+    switchToBgAudio('tetris-audio', 0.3);
+    goTo('scratch');
+  } catch (err) {
+    btn.classList.remove('loading');
+    btn.classList.add('ready');
   }
-
-  // Salva il messaggio base — il premio verrà aggiunto dopo la ruota
-  const dayNames = ['','1 Nov','2 Nov','3 Nov','4 Nov','5 Nov','6 Nov','7 Nov',
-    '8 Nov','9 Nov','10 Nov','11 Nov','12 Nov','13 Nov','14 Nov','15 Nov',
-    '16 Nov','17 Nov','18 Nov','19 Nov','20 Nov','21 Nov','22 Nov','23 Nov',
-    '24 Nov','25 Nov','26 Nov','27 Nov','28 Nov','29 Nov','30 Nov'];
-  const dayList = days.map(d => dayNames[d]).join(', ');
-  _waBaseMsg = `🗳️ Voto di ${currentUser.charAt(0).toUpperCase()+currentUser.slice(1)}:\nGiorni scelti: ${dayList} 🍕`;
-
-  switchToBgAudio('tetris-audio', 0.3);
-  goTo('scratch');
 }
 
 // ─── FIGHT GAME ──────────────────────────────────────────────────────────────
