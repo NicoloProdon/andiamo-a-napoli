@@ -848,8 +848,8 @@
     border:2px solid #444; overflow:hidden;
   }
   .fight-hp-fill { height:100%; transition:width 0.1s linear; }
-  .fight-hp-fill.enemy-bar  { float:right; background:linear-gradient(270deg,#cc0000,#ff3333); }
-  .fight-hp-fill.player-bar { background:linear-gradient(90deg,#3399ff,#66bbff); }
+  .fight-hp-fill.enemy-bar  { float:right; background:linear-gradient(270deg,#1155cc,#4488ff); }
+  .fight-hp-fill.player-bar { background:linear-gradient(90deg,#cc0000,#ff3333); }
   .fight-vs {
     color:#ffd700; font-size:clamp(14px,4vw,20px); font-weight:bold;
     letter-spacing:2px; text-shadow:0 0 8px rgba(255,215,0,0.8);
@@ -2323,7 +2323,7 @@ function initScratchCard() {
   function drawEnemyCounterFist() {
     const eFist = getEnemyFist();
     if (!eFist) return;
-    ctx.strokeStyle = '#3a1111';
+    ctx.strokeStyle = '#111a3a';
     ctx.lineWidth   = 13;
     ctx.lineCap     = 'round';
     ctx.beginPath();
@@ -2377,7 +2377,7 @@ function initScratchCard() {
     const isVold  = currentUser === 'franceska';
 
     const skin  = hitAnim > 0 ? '#e8bbbb' : '#bb8888';
-    const shirt = hitAnim > 0 ? '#882222' : '#3a1111';
+    const shirt = hitAnim > 0 ? '#223388' : '#111a3a';
     const hair  = hitAnim > 0 ? '#3a2210' : '#241408';
 
     ctx.save();
@@ -2402,7 +2402,7 @@ function initScratchCard() {
     if (enemyPunchAnim <= 0) ctx.fillRect(x - 48, GY - 90, 24, 16);
     ctx.fillRect(x + 24, GY - 90, 24, 16);
     // Fists
-    ctx.fillStyle = hitAnim > 0 ? '#c06060' : '#8b2222';
+    ctx.fillStyle = hitAnim > 0 ? '#6080c0' : '#22228b';
     if (enemyPunchAnim <= 0) ctx.fillRect(x - 54, GY - 93, 16, 16);
     ctx.fillRect(x + 38, GY - 93, 16, 16);
 
@@ -2438,23 +2438,15 @@ function initScratchCard() {
       ctx.fillRect(x - 16, GY - 118,  6, 6);
       ctx.fillRect(x +  9, GY - 118,  6, 6);
 
-      // Occhiali tondi (arc) — montatura grigio-verde come nel modello
-      ctx.strokeStyle = hitAnim > 0 ? '#aaaaaa' : '#778866';
-      ctx.lineWidth   = 2.5;
+      // Occhiali tondi (arc) — montatura grigio scuro marcata
+      ctx.strokeStyle = hitAnim > 0 ? '#888888' : '#444444';
+      ctx.lineWidth   = 4;
       ctx.beginPath(); ctx.arc(x - 12, GY - 116, 10, 0, Math.PI * 2); ctx.stroke();
       ctx.beginPath(); ctx.arc(x + 12, GY - 116, 10, 0, Math.PI * 2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x - 2, GY - 116); ctx.lineTo(x + 2, GY - 116); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x - 22, GY - 116); ctx.lineTo(x - 27, GY - 112); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x + 22, GY - 116); ctx.lineTo(x + 27, GY - 112); ctx.stroke();
       ctx.lineWidth = 1;
-
-      // Barba cortissima (stubble deterministico — no flickering)
-      ctx.fillStyle = hitAnim > 0 ? '#6b3322' : '#2e1808';
-      for (let si = 0; si < 50; si += 3) {
-        for (let sj = 0; sj < 20; sj += 3) {
-          if ((si * 3 + sj * 7) % 9 < 4) ctx.fillRect(x - 25 + si, GY - 112 + sj, 2, 2);
-        }
-      }
 
       // Bocca: smirk villain (sx più alto, dx più basso)
       ctx.fillStyle = '#000';
@@ -2490,7 +2482,7 @@ function initScratchCard() {
       if (enemyPunchAnim <= 0) ctx.fillRect(x - 58, GY - 90, 32, 18);
       ctx.fillRect(x + 26, GY - 90, 32, 18);
       // Redraw fists
-      ctx.fillStyle = hitAnim > 0 ? '#c06060' : '#8b2222';
+      ctx.fillStyle = hitAnim > 0 ? '#6080c0' : '#22228b';
       if (enemyPunchAnim <= 0) ctx.fillRect(x - 64, GY - 93, 18, 18);
       ctx.fillRect(x + 46, GY - 93, 18, 18);
 
@@ -2554,16 +2546,16 @@ function initScratchCard() {
     ctx.fillRect(x - 20, GY - 10 + bobY, 18, 10);
     ctx.fillRect(x + 2,  GY - 10 + bobY, 18, 10);
     // Legs
-    ctx.fillStyle = '#0a1a44';
+    ctx.fillStyle = '#440a0a';
     ctx.fillRect(x - 19, GY - 46 + bobY, 15, 36);
     ctx.fillRect(x + 4,  GY - 46 + bobY, 15, 36);
     // Body
-    ctx.fillStyle = '#1133aa';
+    ctx.fillStyle = '#aa1111';
     ctx.fillRect(x - 26, GY - 92 + bobY, 52, 46);
 
     // Punch arm + fist (drawn before head so head overlaps)
     if (fist) {
-      ctx.strokeStyle = '#1133aa';
+      ctx.strokeStyle = '#aa1111';
       ctx.lineWidth   = 14;
       ctx.lineCap     = 'round';
       ctx.beginPath();
@@ -2583,7 +2575,7 @@ function initScratchCard() {
       }
     } else {
       // Idle arms
-      ctx.fillStyle = '#1133aa';
+      ctx.fillStyle = '#aa1111';
       ctx.fillRect(x - 42, GY - 90 + bobY, 18, 14);
       ctx.fillRect(x + 24, GY - 90 + bobY, 18, 14);
     }
@@ -2705,7 +2697,7 @@ function initScratchCard() {
       x     : PX + 10 + Math.random() * 20,
       y     : GY - 175,
       alpha : 1,
-      color : '#1133aa',
+      color : '#aa1111',
       size  : 20,
       vy    : -1.8,
       fade  : 0.03,
@@ -2773,7 +2765,7 @@ function initScratchCard() {
       x     : PX - 20 + Math.random() * 40,
       y     : GY - 185 - Math.random() * 15,
       alpha : 1,
-      color : '#cc0000',
+      color : '#1133cc',
       size  : 18,
       vy    : -1.5,
       fade  : 0.025,
@@ -2807,7 +2799,7 @@ function initScratchCard() {
   // ── START BUTTON ───────────────────────────────────────────────────────────
   document.getElementById('fight-start-btn').addEventListener('click', () => {
     document.getElementById('fight-intro').style.display = 'none';
-    document.getElementById('fight-hint').textContent    = 'PICCHIA IL TIPO! 👊';
+    document.getElementById('fight-hint').textContent    = 'PICCHIA DURO! 👊';
     gameStarted = true;
   });
 
